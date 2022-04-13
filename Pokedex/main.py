@@ -3,7 +3,7 @@
 import pymysql
 import arcade
 
-from Pokedex.views.menuView import MenuView
+from Pokedex.views.titleScreenView import TitleScreenView
 
 WIDTH = 800
 HEIGHT = 600
@@ -73,8 +73,8 @@ class MyGame(arcade.Window):
 
 def main():
     window = arcade.Window(WIDTH, HEIGHT, TITLE)
-    menuView = MenuView(WIDTH, HEIGHT)
-    window.show_view(menuView)
+    titleScreenView = TitleScreenView(WIDTH, HEIGHT)
+    window.show_view(titleScreenView)
     arcade.run()
 
 
