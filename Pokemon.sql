@@ -1,0 +1,92 @@
+use pokemon_server;
+
+SELECT * FROM pokemons;
+
+CREATE TABLE user
+(
+userId INT PRIMARY KEY NOT NULL,
+name VARCHAR(32) NOT NULL,
+numPokemon INT NOT NULL
+);
+
+CREATE TABLE admin
+(
+userId INT NOT NULL,
+name VARCHAR(32) NOT NULL,
+FOREIGN KEY (userId) REFERENCES user(userId)
+	ON UPDATE RESTRICT ON DELETE RESTRICT
+);
+    
+CREATE TABLE pokemon
+(
+pID INT auto_increment PRIMARY KEY,
+pName VARCHAR(32) NOT NULL,
+generation INT NOT NULL,
+type VARCHAR(32) NOT NULL,
+FOREIGN KEY (type) REFERENCES type(name)
+	ON UPDATE RESTRICT ON DELETE RESTRICT
+);
+
+CREATE TABLE type
+(
+name VARCHAR(32) PRIMARY KEY NOT NULL,
+advantages VARCHAR(64) NOT NULL,
+disadvantages VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE powers
+(
+pId INT auto_increment NOT NULL,
+total INT NOT NULL,
+hp INT NOT NULL,
+attack INT NOT NULL,
+defense INT NOT NULL,
+spAtk INT NOT NULL,
+spDef INT NOT NULL,
+speed INT NOT NULL,
+FOREIGN KEY (pId) REFERENCES pokemon(pId)
+	ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE item
+(
+name VARCHAR(32) PRIMARY KEY,
+category VARCHAR(32) NOT NULL
+);
+
+CREATE TABLE teamMember
+(
+pId INT auto_increment NOT NULL,
+item VARCHAR(32),
+level INT NOT NULL,
+health INT NOT NULL,
+FOREIGN KEY (pId) REFERENCES pokemon(pId)
+	ON UPDATE CASCADE ON DELETE RESTRICT,
+FOREIGN KEY (item) REFERENCES item(name)
+	ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE pokeball
+(
+name VARCHAR(32) PRIMARY KEY NOT NULL,
+catchRateBoost INT NOT NULL
+);
+    
+CREATE TABLE team
+(
+teamMember1 INT NOT NULL,
+teamMember2 INT,
+teamMember3 INT,
+teamMember4 INT,
+teamMember5 INT,
+teamMember6 INT
+);
+
+CREATE TABLE battle
+(
+player INT,
+opponent INT,
+location VARCHAR(32)
+);
+
+
