@@ -6,9 +6,12 @@ import arcade.gui
 import pkg_resources
 import pymysql
 
+from pokemon import Pokemon
+
 WIDTH = 800
 HEIGHT = 600
 TITLE = "Pokédex 2: the SQL"
+pokedex = dict()
 
 
 ### VIEWS ###
@@ -88,7 +91,7 @@ class InstructionsView(arcade.View):
 
         # instructions
         arcade.Text("    This application may be used as both a classic Pokédex and to compute battle strategies. "
-                    "To use the Pokédex, simply arrow through the entries, or search by name, id, or type. "
+                    "To use the Pokédex, simply keyboard arrow through the entries, or search by name or id. "
                     "To measure up a prospective battle, choose up to 6 pokémon to populate your team, "
                     "up to 6 pokémon to populate the opposing team, and select the computation you'd like to see. ",
                     400,
@@ -130,8 +133,8 @@ class InstructionsView(arcade.View):
             "font_color_pressed": arcade.color.BLACK,
         }
 
-        # Create a vertical BoxGroup to align buttons
-        v_box = arcade.gui.UIBoxLayout(space_between=20)
+        # Create a horizontal BoxGroup to align buttons
+        v_box = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
 
         # Create the buttons
         pokedexBtn = arcade.gui.UIFlatButton(text="Pokédex", width=200, style=blueStyle)
@@ -284,20 +287,23 @@ class CompView(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
+        self.drawBackground()
+        self.establishWidgetSpace()
         self.renderMenuButton(250, 250)
+        self.manager.draw()
         arcade.finish_render()
 
     def renderMenuButton(self, x, y):
         style = {
             "font_name": ("courier new"),
-            "font_size": 15,
+            "font_size": 12,
             "font_color": arcade.color.BLACK_LEATHER_JACKET,
             "border_width": 2,
             "border_color": arcade.color.PURPUREUS,
             "bg_color": arcade.color.PERSIAN_PINK,
         }
-        v_box = arcade.gui.UIBoxLayout(space_between=20)
-        menuBtn = arcade.gui.UIFlatButton(text="Menu", width=200, style=style)
+        v_box = arcade.gui.UIBoxLayout()
+        menuBtn = arcade.gui.UIFlatButton(text="Menu", width=100, style=style)
         v_box.add(menuBtn)
         self.manager.add(
             arcade.gui.UIAnchorWidget(
@@ -314,7 +320,192 @@ class CompView(arcade.View):
             game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
             self.window.show_view(game_view)
 
-        self.manager.draw()
+    def drawBackground(self):
+        # advBG
+        arcade.create_rectangle_filled(200, 450, 400, 300, arcade.color.BARN_RED, 0).draw()
+
+        arcade.create_rectangle_filled(85, 485, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(200, 485, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(315, 485, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(85, 370, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(200, 370, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(315, 370, 100, 100, arcade.color.WHITE, 0).draw()
+
+        # calcBG
+        arcade.create_rectangle_filled(200, 150, 400, 300, arcade.color.ALMOND, 0).draw()
+
+        # reportsBG
+        arcade.create_rectangle_filled(600, 450, 400, 300, arcade.color.ALMOND, 0).draw()
+
+        # usrBG
+        arcade.create_rectangle_filled(600, 150, 400, 300, arcade.color.GENERIC_VIRIDIAN, 0).draw()
+
+        arcade.create_rectangle_filled(480, 70, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(600, 70, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(720, 70, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(480, 190, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(600, 190, 100, 100, arcade.color.WHITE, 0).draw()
+        arcade.create_rectangle_filled(720, 190, 100, 100, arcade.color.WHITE, 0).draw()
+
+    def establishWidgetSpace(self):
+        # whole screen : left and right
+        h_box = arcade.gui.UIBoxLayout(vertical=False)
+        left_box = arcade.gui.UIBoxLayout()
+        right_box = arcade.gui.UIBoxLayout()
+
+        # top left widget : adversary party
+        adversaryParty = arcade.gui.UIBoxLayout(space_between=20)
+        advPartyLabel = arcade.gui.UITextArea(#x=200,
+                                              #y=555,
+                                              text="Adversary Party",
+                                              width=400,
+                                              height=45,
+                                              font_size=12,
+                                              text_color=arcade.color.WHITE,
+                                              font_name="courier new")
+        advTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=15)
+        advBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=15)
+
+        adv1 = arcade.gui.UIInteractiveWidget()
+        adv2 = arcade.gui.UIInteractiveWidget()
+        adv3 = arcade.gui.UIInteractiveWidget()
+        adv4 = arcade.gui.UIInteractiveWidget()
+        adv5 = arcade.gui.UIInteractiveWidget()
+        adv6 = arcade.gui.UIInteractiveWidget()
+
+        adv1.on_click = self.onClickAdjustParty
+        adv2.on_click = self.onClickAdjustParty
+        adv3.on_click = self.onClickAdjustParty
+        adv4.on_click = self.onClickAdjustParty
+        adv5.on_click = self.onClickAdjustParty
+        adv6.on_click = self.onClickAdjustParty
+
+        adv1Border = arcade.gui.UIBorder(child=adv1)
+        adv2Border = arcade.gui.UIBorder(child=adv2)
+        adv3Border = arcade.gui.UIBorder(child=adv3)
+        adv4Border = arcade.gui.UIBorder(child=adv4)
+        adv5Border = arcade.gui.UIBorder(child=adv5)
+        adv6Border = arcade.gui.UIBorder(child=adv6)
+
+        advTopRow.add(adv1Border)
+        advTopRow.add(adv2Border)
+        advTopRow.add(adv3Border)
+        advBottomRow.add(adv4Border)
+        advBottomRow.add(adv5Border)
+        advBottomRow.add(adv6Border)
+
+        adversaryParty.add(advPartyLabel)
+        adversaryParty.add(advTopRow)
+        adversaryParty.add(advBottomRow)
+
+        adversaryPartyBorder = arcade.gui.UIBorder(child=adversaryParty)
+
+        # bottom left widget : calculations buttons
+        calcBox = arcade.gui.UIInteractiveWidget(x=0, y=0, width=400, height=300)
+        calcLabel = arcade.gui.UITextArea(text="Calculations: ",
+                                          width=400,
+                                          height=20,
+                                          font_size=12,
+                                          text_color=arcade.color.BLACK,
+                                          font_name="courier new")
+        calcBox.add(calcLabel)
+        calcBoxBorder = arcade.gui.UIBorder(child=calcBox)
+
+        # add to parent widget
+        left_box.add(adversaryPartyBorder)
+        left_box.add(calcBoxBorder)
+
+        # top right widget : generated reports
+        # TODO : text = sql procedure to get calc results
+        reportsBox = arcade.gui.UISpace(width=400,
+                                        height=300)
+        text = "Reports: "
+        reports = arcade.gui.UITextArea(#x=400,
+                                        #y=450,
+                                        text=text,
+                                        font_size=12,
+                                        text_color=arcade.color.BLACK,
+                                        font_name="courier new")
+        reportsBox.add(reports)
+        reportsBoxBorder = arcade.gui.UIBorder(child=reportsBox)
+
+        # bottom right widget : user party
+        myTeamLabel = arcade.gui.UILabel(text="My Team",
+                                         width=400,
+                                         height=20,
+                                         font_size=12,
+                                         font_name="courier new")
+        userParty = arcade.gui.UIBoxLayout(space_between=20)
+        userTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=15)
+        userBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=15)
+
+        user1 = arcade.gui.UIInteractiveWidget()
+        user2 = arcade.gui.UIInteractiveWidget()
+        user3 = arcade.gui.UIInteractiveWidget()
+        user4 = arcade.gui.UIInteractiveWidget()
+        user5 = arcade.gui.UIInteractiveWidget()
+        user6 = arcade.gui.UIInteractiveWidget()
+        """
+
+        user1.on_click = self.onClickAdjustParty
+        user2.on_click = self.onClickAdjustParty
+        user3.on_click = self.onClickAdjustParty
+        user4.on_click = self.onClickAdjustParty
+        user5.on_click = self.onClickAdjustParty
+        user6.on_click = self.onClickAdjustParty
+        """
+
+        user1Border = arcade.gui.UIBorder(child=user1)
+        user2Border = arcade.gui.UIBorder(child=user2)
+        user3Border = arcade.gui.UIBorder(child=user3)
+        user4Border = arcade.gui.UIBorder(child=user4)
+        user5Border = arcade.gui.UIBorder(child=user5)
+        user6Border = arcade.gui.UIBorder(child=user6)
+
+        userTopRow.add(user1Border)
+        userTopRow.add(user2Border)
+        userTopRow.add(user3Border)
+        userBottomRow.add(user4Border)
+        userBottomRow.add(user5Border)
+        userBottomRow.add(user6Border)
+
+        userParty.add(myTeamLabel)
+        userParty.add(userTopRow)
+        userParty.add(userBottomRow)
+
+        userPartyBorder = arcade.gui.UIBorder(child=userParty)
+
+        # add to parent widgets
+        right_box.add(reportsBoxBorder)
+        right_box.add(userPartyBorder)
+
+        h_box.add(left_box)
+        h_box.add(right_box)
+
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=h_box)
+        )
+
+    def onClickAdjustParty(self, event):
+        # The code in this function is run when we click the ok button.
+        # The code below opens the message box and auto-dismisses it when done.
+        message_box = arcade.gui.UIMessageBox(
+            width=300,
+            height=200,
+            message_text=(
+                "Add party member : "
+            ),
+            callback=self.on_message_box_close,
+            buttons=["Ok", "Cancel"]
+        )
+
+        self.manager.add(message_box)
+
+    def on_message_box_close(self, button_text):
+        print(f"User pressed {button_text}.")
 
 
 ### SCRIPTING ###
