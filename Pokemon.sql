@@ -1,23 +1,32 @@
+create database if not exists pokemon_server;
+
 use pokemon_server;
 
 SELECT * FROM pokemons;
 
-CREATE TABLE user
+CREATE TABLE IF NOT EXISTS user 
 (
 userId INT PRIMARY KEY NOT NULL,
 name VARCHAR(32) NOT NULL,
 numPokemon INT NOT NULL
 );
 
-CREATE TABLE admin
+CREATE TABLE IF NOT EXISTS admin 
 (
 userId INT NOT NULL,
 name VARCHAR(32) NOT NULL,
 FOREIGN KEY (userId) REFERENCES user(userId)
 	ON UPDATE RESTRICT ON DELETE RESTRICT
 );
+
+CREATE TABLE IF NOT EXISTS type
+(
+name VARCHAR(32) PRIMARY KEY NOT NULL,
+advantages VARCHAR(64) NOT NULL,
+disadvantages VARCHAR(64) NOT NULL
+);
     
-CREATE TABLE pokemon
+CREATE TABLE IF NOT EXISTS pokemon
 (
 pID INT auto_increment PRIMARY KEY,
 pName VARCHAR(32) NOT NULL,
@@ -27,14 +36,7 @@ FOREIGN KEY (type) REFERENCES type(name)
 	ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
-CREATE TABLE type
-(
-name VARCHAR(32) PRIMARY KEY NOT NULL,
-advantages VARCHAR(64) NOT NULL,
-disadvantages VARCHAR(64) NOT NULL
-);
-
-CREATE TABLE powers
+CREATE TABLE IF NOT EXISTS powers
 (
 pId INT auto_increment NOT NULL,
 total INT NOT NULL,
@@ -48,13 +50,13 @@ FOREIGN KEY (pId) REFERENCES pokemon(pId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE item
+CREATE TABLE IF NOT EXISTS item
 (
 name VARCHAR(32) PRIMARY KEY,
 category VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE teamMember
+CREATE TABLE IF NOT EXISTS teamMember
 (
 pId INT auto_increment NOT NULL,
 item VARCHAR(32),
@@ -66,13 +68,13 @@ FOREIGN KEY (item) REFERENCES item(name)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE pokeball
+CREATE TABLE IF NOT EXISTS pokeball
 (
 name VARCHAR(32) PRIMARY KEY NOT NULL,
 catchRateBoost INT NOT NULL
 );
     
-CREATE TABLE team
+CREATE TABLE IF NOT EXISTS team
 (
 teamMember1 INT NOT NULL,
 teamMember2 INT,
@@ -82,7 +84,7 @@ teamMember5 INT,
 teamMember6 INT
 );
 
-CREATE TABLE battle
+CREATE TABLE IF NOT EXISTS battle
 (
 player INT,
 opponent INT,
