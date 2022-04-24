@@ -1,8 +1,5 @@
 use pokemon_server;
 
-SELECT * FROM pokemons WHERE `#` = 4;
-
-
 CREATE TABLE user
 (
 userId INT PRIMARY KEY NOT NULL,
@@ -55,27 +52,27 @@ name VARCHAR(32) PRIMARY KEY,
 category VARCHAR(32) NOT NULL
 );
 
+CREATE TABLE team
+(
+teamId INT auto_increment PRIMARY KEY,
+userId INT,
+FOREIGN KEY (userId) REFERENCES user(userId)
+	ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
 CREATE TABLE teamMember
 (
 pId INT auto_increment NOT NULL,
+teamId INT NOT NULL,
 item VARCHAR(32),
 level INT NOT NULL,
 health INT NOT NULL,
 FOREIGN KEY (pId) REFERENCES pokemon(pId)
 	ON UPDATE CASCADE ON DELETE RESTRICT,
+FOREIGN KEY (teamId) REFERENCES team(teamId)
+	ON UPDATE CASCADE ON DELETE RESTRICT,
 FOREIGN KEY (item) REFERENCES item(name)
 	ON UPDATE CASCADE ON DELETE RESTRICT
-);
-    
-CREATE TABLE team
-(
-teamId INT auto_increment PRIMARY KEY,
-teamMember1 INT NOT NULL,
-teamMember2 INT,
-teamMember3 INT,
-teamMember4 INT,
-teamMember5 INT,
-teamMember6 INT
 );
 
 CREATE TABLE battle
@@ -91,35 +88,54 @@ FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
 
 -- adds a teammember to team
 DELIMITER //
-CREATE procedure addTeamMember(teammemberId INT)
+CREATE procedure addTeamMember(pId INT, teamId INT, item VARCHAR(32), level INT, health INT)
 BEGIN
-INSERT INTO team (pId) VALUES (teammemberId);
+INSERT INTO teamMember(pId, teamId, item, level, health) VALUES (pId, teamId, item, level, health);
 END//
 
 -- deletes a teammember from team
 DELIMITER //
-CREATE procedure deleteTeamMember(teammemberId INT)
+CREATE procedure deleteTeamMember(pId INT, teamId INT)
 BEGIN
-DELETE FROM team WHERE teammember.pId = teammemberId;
+DELETE FROM teamMember WHERE teamMember.pId = pId AND teamMember.teamId = teamId;
 END //
 
 -- update a teammember from team
 DELIMITER //
 CREATE procedure updateTeamMember(teammemberId INT, field VARCHAR(32), newValue INT)
 BEGIN
-UPDATE teammember SET field = newValue WHERE teammember.pId = teammemberId;
+UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
 END //
 
 -- compares type advantages for 2 given teams
 DELIMITER //
-CREATE procedure compare (IN teamId1 INT, teamId2 INT)
+CREATE procedure compareTeams (IN teamId1 INT, teamId2 INT)
 BEGIN
-SELECT teamMember1, teamMember2, teamMember3, teamMember4, teamMember5, teamMember6 FROM team
-INNER JOIN
-WHERE teamId = 456,
-teamMember
+SELECT teamId FROM teamMember 
+INNER JOIN pokemon
+ON teamMember.pId = pokemon.pId
+INNER JOIN type
+ON pokemon.type = type.type 
+WHERE teamId = teamId1 AND teamId = teamId2;
 END//
 
 -- If less than 6 members, reccomends a team member to add
+DELIMITER //
+CREATE procedure reccomendTeamMember(teamId INT)
+BEGIN
+END//
 
-function to read pokedex -- find by ID AND NAME
+-- Finds a pokemon based on a given ID 
+DELIMITER //
+CREATE procedure findPokemonByID(pokemonId INT)
+SELECT * FROM pokemon WHERE pId = pokemonId;
+BEGIN
+END//
+
+-- Finds a pokemon based on a given name
+DELIMITER //
+CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
+SELECT * FROM pokemon WHERE pName = pokemonName;
+BEGIN
+END//
+
