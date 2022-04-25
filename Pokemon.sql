@@ -108,21 +108,41 @@ UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
 END //
 
 -- compares type advantages for 2 given teams
+-- returns the types of pokemons in the 2 given teams
 DELIMITER //
 CREATE procedure compareTeams (IN teamId1 INT, teamId2 INT)
 BEGIN
-SELECT teamId FROM teamMember 
+SELECT advantages FROM type
 INNER JOIN pokemon
-ON teamMember.pId = pokemon.pId
-INNER JOIN type
-ON pokemon.type = type.type 
-WHERE teamId = teamId1 AND teamId = teamId2;
+ON type.type = pokemon.type
+INNER JOIN teamMember
+ON pokemon.pId = teamMember.pId
+WHERE teamMember.teamId = teamId1 AND teamMember.teamId = teamId2;
 END//
+
+DELIMITER //
+CREATE function teamTypes (teamId1 INT)
+RETURNS varchar(32)
+READS SQL DATA
+BEGIN
+SELECT type FROM type
+INNER JOIN pokemon
+ON type.type = pokemon.type
+INNER JOIN teamMember
+ON pokemon.pId = teamMember.pId
+WHERE teamMember.teamId = teamId1;
+END//
+
+SELECT teamTypes(304), teamTypes(306) FROM type;
 
 -- If less than 6 members, reccomends a team member to add
 DELIMITER //
 CREATE procedure reccomendTeamMember(teamId INT)
 BEGIN
+SELECT pId, pName FROM pokemon
+INNER JOIN teamMember
+ON pokemon.pId = teamMember.pId
+WHERE teamMember.teamId = teamId;	
 END//
 
 -- Finds a pokemon based on a given ID 
