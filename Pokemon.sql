@@ -120,21 +120,6 @@ ON pokemon.pId = teamMember.pId
 WHERE teamMember.teamId = teamId1 AND teamMember.teamId = teamId2;
 END//
 
-DELIMITER //
-CREATE function teamTypes (teamId1 INT)
-RETURNS varchar(32)
-READS SQL DATA
-BEGIN
-SELECT type FROM type
-INNER JOIN pokemon
-ON type.type = pokemon.type
-INNER JOIN teamMember
-ON pokemon.pId = teamMember.pId
-WHERE teamMember.teamId = teamId1;
-END//
-
-SELECT teamTypes(304), teamTypes(306) FROM type;
-
 -- If less than 6 members, reccomends a team member to add
 DELIMITER //
 CREATE procedure reccomendTeamMember(teamId INT)
