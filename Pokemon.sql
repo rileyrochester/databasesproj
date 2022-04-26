@@ -19,7 +19,8 @@ CREATE TABLE type
 (
 name VARCHAR(32) PRIMARY KEY NOT NULL,
 advantages VARCHAR(64) NOT NULL,
-disadvantages VARCHAR(64) NOT NULL
+disadvantages VARCHAR(64) NOT NULL,
+advantageScore INT NOT NULL
 );
     
 CREATE TABLE pokemon
@@ -108,26 +109,61 @@ UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
 END //
 
 -- compares type advantages for 2 given teams
--- returns the types of pokemons in the 2 given teams
 DELIMITER //
 CREATE procedure compareTeams (IN teamId1 INT, teamId2 INT)
 BEGIN
-SELECT advantages FROM type
+DECLARE avgScore1 INT;
+DECLARE avgScore2 INT;
+DECLARE result VARCHAR(32);
+
+SELECT avg(advantageScore) INTO avgScore1 FROM type
 INNER JOIN pokemon
 ON type.type = pokemon.type
 INNER JOIN teamMember
 ON pokemon.pId = teamMember.pId
-WHERE teamMember.teamId = teamId1 AND teamMember.teamId = teamId2;
+WHERE teamMember.teamId = teamId1;
+
+SELECT avg(advantageScore) INTO avgScore2 FROM type
+INNER JOIN pokemon
+ON type.type = pokemon.type
+INNER JOIN teamMember
+ON pokemon.pId = teamMember.pId
+WHERE teamMember.teamId = teamId2;
+
+IF(avgScore1 > avgScore2)
+	THEN SET result = 'Team 1 has the advantage';
+ELSE
+	SET result = 'Team 2 has the advantage';
+END IF;
+
+RETURN result;
 END//
 
 -- If less than 6 members, reccomends a team member to add
 DELIMITER //
 CREATE procedure reccomendTeamMember(teamId INT)
 BEGIN
-SELECT pId, pName FROM pokemon
-INNER JOIN teamMember
-ON pokemon.pId = teamMember.pId
-WHERE teamMember.teamId = teamId;	
+
+DECLARE numTeamMembers INT;
+DECLARE pokemonName VARCHAR(32);
+DECLARE result VARCHAR(32);
+
+SELECT count(teamId) INTO numTeamMembers FROM teamMember
+WHERE teamId = teamId;
+
+IF (numTeamMembers = 6)
+	THEN SET result = 'Your team is already full';
+ELSE
+    SELECT max(total), pokemon.pName INTO pokemonName FROM powers
+	INNER JOIN teamMembers
+    ON powers.pId = teamMembers.pId
+    INNER JOIN pokemon
+    ON teamMembers.pId = pokemon.pId;
+    
+    SET result = 'Add ' + pokemonName + ' to your team to increase your power';
+END IF;
+
+RETURN result;
 END//
 
 -- Finds a pokemon based on a given ID 
