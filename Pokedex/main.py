@@ -5,6 +5,7 @@ import arcade
 import arcade.gui
 import pkg_resources
 import pymysql
+import cryptography
 
 #from pokemon import Pokemon
 
@@ -81,10 +82,10 @@ class InstructionsView(arcade.View):
         self.sqlun = sqlun
         self.sqlpw = sqlpw
         self.manager = arcade.gui.UIManager()
-        self.manager.enable()
 
     def on_show(self):
         arcade.set_background_color(arcade.color.FLORAL_WHITE)
+        self.manager.enable()
 
     def on_draw(self):
         arcade.start_render()
@@ -183,21 +184,23 @@ class PokedexView(arcade.View):
         self.sqlpw = sqlpw
         self.pid = 1
         self.manager = arcade.gui.UIManager()
-        self.manager.enable()
         self.conn = None
         self.cur = None
-        self.pokemon = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.pokemon = (1, "bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         self.text = ''
 
     def on_show(self):
         arcade.set_background_color(arcade.color.FLORAL_WHITE)
+        self.manager.enable()
 
     def on_draw(self):
         self.manager.clear()
         arcade.start_render()
         self.drawDexBase()
         self.renderPokemon()
-        arcade.draw_text(self.text, 200, 150, arcade.color.GREEN, 24, anchor_x='center')
+        arcade.draw_text(self.text, 225, 140, arcade.color.GREEN, 20, anchor_x='center')
+        arcade.draw_text("start typing your search query or keyboard arrow through results", 300, 50,
+                         arcade.color.BLACK_LEATHER_JACKET, 10, anchor_x='center')
         self.renderMenuButton(250, 250)
         self.manager.draw()
         arcade.finish_render()
@@ -210,13 +213,23 @@ class PokedexView(arcade.View):
         image = arcade.load_texture(imagePath)
         scale = self.WIDTH / image.width
         arcade.draw_lrwh_rectangle_textured(40, 0, 700, 600, image, scale)
+        arcade.draw_text("type:", 470, 155, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("total:", 468, 205, arcade.color.BLACK, 8, font_name="courier new")
+        arcade.draw_text("hp:", 480, 290, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("atk:", 550, 298, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("sp atk:", 547, 288, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("def:", 550, 268, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("sp def:", 547, 258, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("speed:", 470, 260, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("generation", 125, 150, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text("legendary:", 200, 230, arcade.color.BLACK, 8, font_name="courier new")
 
     def renderPokemon(self):
         self.mySqlConnect()
         self.loadPokemon()
         self.closeSqlConnection()
 
-        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pokemon[0][0]}.png)")
+        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pokemon[0][0]}.png")
         sprite = arcade.load_texture(spritePath)
         spriteScale = self.WIDTH / (sprite.width * 8)
         arcade.draw_scaled_texture_rectangle(250,
@@ -226,14 +239,36 @@ class PokedexView(arcade.View):
 
         info = f"{self.pokemon[0][0]} {self.pokemon[0][1]}"
 
-        infoArea = arcade.gui.UITextArea(x=550,
-                                         y=350,
+        infoArea = arcade.gui.UITextArea(x=480,
+                                         y=330,
                                          text=info,
                                          font_size=16,
                                          font_name=("courier new"),
                                          text_color=arcade.color.WHITE)
         self.manager.add(infoArea)
-        print(self.manager.children)
+
+        arcade.draw_text(f"{self.pokemon[0][2]}", #"type 1:",
+                         490, 142, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][3]}",  # "type 2:",
+                         605, 142, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][4]}", #"total:",
+                         513, 205, arcade.color.BLACK, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][5]}", #"hp:",
+                         517, 290, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][6]}", #"atk:",
+                         603, 290, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][8]}", #"sp atk:",
+                         645, 290, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][7]}", #"def:",
+                         603, 260, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][9]}", #"sp def:",
+                         645, 260, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][10]}", #"speed:",
+                         517, 260, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][11]}", #"generation",
+                         148, 175, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[0][12]}", #"legendary:",
+                         270, 230, arcade.color.BLACK, 8, font_name="courier new")
 
     def renderMenuButton(self, x, y):
         style = {
@@ -270,9 +305,6 @@ class PokedexView(arcade.View):
             if self.pid == 663 :
                 self.pid = 1
             else :
-                print("THIS IS MY STUPID FUCKING PID FUCK YOU : ")
-                print(self.pid)
-                print("lsfhdjsfhjksdhf")
                 self.pid += 1
 
         # arrow left
@@ -280,7 +312,6 @@ class PokedexView(arcade.View):
             if self.pid == 1 :
                 self.pid = 663
             else :
-                print(self.pid)
                 self.pid -= 1
 
         # enter aka search
@@ -290,6 +321,10 @@ class PokedexView(arcade.View):
             self.mySqlConnect()
             self.loadPokemon(searchQry)
             self.closeSqlConnection()
+
+        # backspace
+        elif key == arcade.key.BACKSPACE :
+            self.text = self.text[0 : len(self.text) - 1]
 
         # search query
         else :
@@ -324,7 +359,6 @@ class PokedexView(arcade.View):
             currPid = True
 
         self.loadPokemonHelper(stmt, currPid)
-        print(self.pokemon)
 
     def loadPokemonHelper(self, stmt, currPid):
         if currPid and self.pid in pokedex:
@@ -349,12 +383,14 @@ class CompView(arcade.View):
         self.HEIGHT = HEIGHT
         self.sqlun = sqlun
         self.sqlpw = sqlpw
+        self.conn = None
+        self.cur = None
         self.manager = arcade.gui.UIManager()
-        self.manager.enable()
 
     def on_show(self):
         arcade.set_background_color(arcade.color.PURPUREUS)
         print(arcade.get_viewport())
+        self.manager.enable()
 
     def on_draw(self):
         arcade.start_render()
@@ -476,8 +512,7 @@ class CompView(arcade.View):
         adversaryPartyBorder = arcade.gui.UIBorder(child=adversaryParty)
 
         # bottom left widget : calculations buttons
-        calcBox = arcade.gui.UIInteractiveWidget(#x=0, y=0,
-                                                 width=400, height=300)
+        calcBox = arcade.gui.UIBoxLayout()
         calcLabel = arcade.gui.UITextArea(text="Calculations: ",
                                           #x=0,
                                           #y=275,
@@ -498,21 +533,24 @@ class CompView(arcade.View):
         # TODO : text = sql procedure to get calc results
         reportsBox = arcade.gui.UIBoxLayout(#x=400,
                                         #y=300,
-                                        #width=400,
-                                        #height=300,
+                                        # width=400,
+                                        # height=300,
                                         #color=arcade.color.CEIL
                                         )
-        text = "Reports: "
-        reports = arcade.gui.UITextArea(#x=400,
+        text = "reports..."
+        reportsLabel = arcade.gui.UITextArea(#x=400,
                                         #y=565,
                                         width=400,
-                                        hieght=300,
-                                        text=text,
+                                        hieght=25,
+                                        text="Reports: ",
                                         font_size=12,
                                         text_color=arcade.color.BLACK,
                                         font_name="courier new")
-        reportsBorder = arcade.gui.UIBorder(child=reports)
-        reportsBox.add(reportsBorder)
+        reportsLabelBorder = arcade.gui.UIBorder(child=reportsLabel)
+        repsRes = arcade.gui.UIBorder(child=
+                                      arcade.gui.UITextArea(text=text, height=275))
+        reportsBox.add(reportsLabelBorder)
+        reportsBox.add(repsRes)
         reportsBoxBorder = arcade.gui.UIBorder(child=reportsBox)
 
         # bottom right widget : user party
@@ -595,6 +633,58 @@ class CompView(arcade.View):
 
     def on_message_box_close(self, button_text):
         print(f"User pressed {button_text}.")
+
+    def renderPokemon(self):
+        self.mySqlConnect()
+        self.loadPokemon()
+        self.closeSqlConnection()
+
+        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pokemon[0][0]}.png")
+        sprite = arcade.load_texture(spritePath)
+        spriteScale = self.WIDTH / (sprite.width * 8)
+        arcade.draw_scaled_texture_rectangle(250,
+                                             300,
+                                             sprite,
+                                             spriteScale)
+
+    def loadPokemon(self, searchQry=None):
+        if searchQry is not None :
+            if searchQry.isnumeric() :
+                stmt = f"select * from pokemons where `#` = {searchQry};"
+                self.pid = int(searchQry)
+                currPid = True
+            else :
+                stmt = f"select * from pokemons where Name = \"{searchQry}\""
+                currPid = False
+        else :
+            stmt = f"select * from pokemons where `#` = {self.pid};"
+            currPid = True
+
+        self.loadPokemonHelper(stmt, currPid)
+
+    def loadPokemonHelper(self, stmt, currPid):
+        if currPid and self.pid in pokedex:
+            self.pokemon = pokedex.get(self.pid)
+        else:
+            self.cur.execute(stmt)
+            self.pokemon = self.cur.fetchall()
+            self.pid = self.pokemon[0][0]
+            pokedex[self.pid] = self.pokemon
+
+    ### MYSQL CONNECTION ###
+    def mySqlConnect(self):
+        self.conn = pymysql.connect(
+            host='localhost',
+            user=self.sqlun,
+            password=self.sqlpw,
+            db='pokemon_server',
+        )
+
+        self.cur = self.conn.cursor()
+
+    def closeSqlConnection(self):
+        self.cur.close()
+        self.conn.close()
 
 
 ### SCRIPTING ###
