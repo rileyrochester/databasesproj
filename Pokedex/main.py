@@ -385,8 +385,13 @@ class CompView(arcade.View):
         self.conn = None
         self.cur = None
         self.manager = arcade.gui.UIManager()
+        self.pokemon = ((1, "Bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
         self.userParty = dict()
         self.advParty = dict()
+        self.text = ''
+        self.pid = 1
+        self.curWidgetXY = ()
+        self.dialogueBox = None
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALMOND)
@@ -394,14 +399,31 @@ class CompView(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
+        self.manager.clear()
         self.drawBackground()
         self.establishWidgetSpace()
-        # self.renderMenuButton(250, 250)
+        self.renderMenuButton(350, -250)
         self.manager.draw()
         arcade.finish_render()
 
     def on_hide_view(self):
         self.manager.disable()
+
+    def on_key_press(self, key, modifiers):
+        # enter aka search
+        if key == arcade.key.ENTER:
+            searchQry = self.text.strip().title()
+            self.text = ''
+            self.manager.remove(self.dialogueBox)
+            self.renderPokemon(searchQry, self.curWidgetXY[0], self.curWidgetXY[1])
+
+        # backspace
+        elif key == arcade.key.BACKSPACE:
+            self.text = self.text[0: len(self.text) - 1]
+
+        # search query
+        else:
+            self.text += chr(key)
 
     def renderMenuButton(self, x, y):
         style = {
@@ -493,12 +515,12 @@ class CompView(arcade.View):
         adv5 = arcade.gui.UIInteractiveWidget()
         adv6 = arcade.gui.UIInteractiveWidget()
 
-        adv1.on_click = self.onClickAdjustParty
-        adv2.on_click = self.onClickAdjustParty
-        adv3.on_click = self.onClickAdjustParty
-        adv4.on_click = self.onClickAdjustParty
-        adv5.on_click = self.onClickAdjustParty
-        adv6.on_click = self.onClickAdjustParty
+        adv1.on_click = self.onClickAdjustAdvParty
+        adv2.on_click = self.onClickAdjustAdvParty
+        adv3.on_click = self.onClickAdjustAdvParty
+        adv4.on_click = self.onClickAdjustAdvParty
+        adv5.on_click = self.onClickAdjustAdvParty
+        adv6.on_click = self.onClickAdjustAdvParty
 
         adv1Border = arcade.gui.UIBorder(child=adv1)
         adv2Border = arcade.gui.UIBorder(child=adv2)
@@ -581,12 +603,12 @@ class CompView(arcade.View):
         user5 = arcade.gui.UIInteractiveWidget()
         user6 = arcade.gui.UIInteractiveWidget()
 
-        user1.on_click = self.onClickAdjustParty
-        user2.on_click = self.onClickAdjustParty
-        user3.on_click = self.onClickAdjustParty
-        user4.on_click = self.onClickAdjustParty
-        user5.on_click = self.onClickAdjustParty
-        user6.on_click = self.onClickAdjustParty
+        user1.on_click = self.onClickAdjustUserParty
+        user2.on_click = self.onClickAdjustUserParty
+        user3.on_click = self.onClickAdjustUserParty
+        user4.on_click = self.onClickAdjustUserParty
+        user5.on_click = self.onClickAdjustUserParty
+        user6.on_click = self.onClickAdjustUserParty
 
         user1Border = arcade.gui.UIBorder(child=user1)
         user2Border = arcade.gui.UIBorder(child=user2)
@@ -632,15 +654,35 @@ class CompView(arcade.View):
 
         return reportsBoxBorder
 
-    def onClickAdjustParty(self, event):
-        name = input("Pokemon name : ").strip().title()
+    def onClickAdjustAdvParty(self, event):
+        print(event)
+        self.onClickAdjustParty(event)
+        self.advParty[self.pid] = self.pokemon
 
-    def renderPokemon(self, pid, cx, cy):
+    def onClickAdjustUserParty(self, event):
+        self.onClickAdjustParty(event)
+        self.userParty[self.pid] = self.pokemon
+
+    def onClickAdjustParty(self, event):
+        #print(event)
+        rect = arcade.gui.UISpace(event.x, event.y, 100, 100, arcade.color.FLORAL_WHITE)
+        prompt = arcade.gui.UIInputText(event.x, event.y, 100, 100,
+                                        "Type pokemon name or id : ",
+                                        "courier new",
+                                        12, arcade.color.GREEN, True)
+        #text = arcade.gui.UITextArea(width=100, text=self.text, text_color=arcade.color.GREEN, multiline=True)
+        self.dialogueBox = arcade.gui.UIWidget(children=(rect, prompt))
+        self.manager.add(self.dialogueBox)
+        self.curWidgetXY = (event.x, event.y)
+        arcade.draw_text(self.text, event.x + 10, event.y + 10, arcade.color.GREEN, 20, 100, multiline=True)
+        print(self.text)
+
+    def renderPokemon(self, searchQry, cx, cy):
         self.mySqlConnect()
-        self.loadPokemon()
+        self.loadPokemon(searchQry)
         self.closeSqlConnection()
 
-        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{pid}.png")
+        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pid}.png")
         sprite = arcade.load_texture(spritePath)
         spriteScale = self.WIDTH / (sprite.width * 8)
         arcade.draw_scaled_texture_rectangle(cx,
