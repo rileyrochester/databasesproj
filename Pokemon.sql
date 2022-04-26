@@ -1,6 +1,5 @@
 use pokemon_server;
 
-/*
 CREATE TABLE user
 (
 userId INT PRIMARY KEY NOT NULL,
