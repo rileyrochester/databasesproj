@@ -1,5 +1,6 @@
 use pokemon_server;
 
+/*
 CREATE TABLE user
 (
 userId INT PRIMARY KEY NOT NULL,
@@ -110,8 +111,9 @@ END //
 
 -- compares type advantages for 2 given teams
 DELIMITER //
-CREATE procedure compareTeams (IN teamId1 INT, teamId2 INT)
+CREATE function compareTeams (teamId1 INT, teamId2 INT) RETURNS VARCHAR(32) READS SQL DATA
 BEGIN
+
 DECLARE avgScore1 INT;
 DECLARE avgScore2 INT;
 DECLARE result VARCHAR(32);
@@ -141,7 +143,7 @@ END//
 
 -- If less than 6 members, reccomends a team member to add
 DELIMITER //
-CREATE procedure reccomendTeamMember(teamId INT)
+CREATE function reccomendTeamMember(teamId INT) RETURNS VARCHAR(32) READS SQL DATA
 BEGIN
 
 DECLARE numTeamMembers INT;
@@ -169,14 +171,14 @@ END//
 -- Finds a pokemon based on a given ID 
 DELIMITER //
 CREATE procedure findPokemonByID(pokemonId INT)
-SELECT * FROM pokemon WHERE pId = pokemonId;
 BEGIN
+SELECT * FROM pokemon WHERE pId = pokemonId;
 END//
 
 -- Finds a pokemon based on a given name
 DELIMITER //
 CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
-SELECT * FROM pokemon WHERE pName = pokemonName;
 BEGIN
+SELECT * FROM pokemon WHERE pName = pokemonName;
 END//
 
