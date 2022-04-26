@@ -12,6 +12,8 @@ WIDTH = 800
 HEIGHT = 600
 TITLE = "Pokédex 2: the SQL"
 pokedex = dict()
+USERPARTY = []
+ADVPARTY = []
 
 
 ### VIEWS ###
@@ -160,7 +162,7 @@ class InstructionsView(arcade.View):
 
         @comptrBtn.event("on_click")
         def on_click_flatbutton(event):
-            game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            game_view = GetInfoView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
             self.window.show_view(game_view)
 
         # draws buttons
@@ -373,6 +375,191 @@ class PokedexView(arcade.View):
         self.conn.close()
 
 
+# GET INFO SCREEN
+class GetInfoView(arcade.View):
+
+    def __init__(self, WIDTH, HEIGHT, sqlun, sqlpw):
+        super().__init__()
+        self.WIDTH = WIDTH
+        self.HEIGHT = HEIGHT
+        self.sqlun = sqlun
+        self.sqlpw = sqlpw
+        self.conn = None
+        self.cur = None
+        self.manager = arcade.gui.UIManager()
+        self.text = ""
+        self.pokemon = ((1, "Bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        self.pid = 1
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.PAPAYA_WHIP)
+        self.manager.enable()
+
+    def on_hide_view(self):
+        self.manager.disable()
+
+    def on_draw(self):
+        arcade.start_render()
+        self.manager.clear()
+
+        arcade.draw_text(
+            f"type name or id of next party member : ",
+            60, 520,
+            arcade.color.BLACK_LEATHER_JACKET,
+            18, 700,
+            "center",
+            "courier new",
+        )
+        arcade.draw_text(
+            f"press ENTER to add to user party, press TAB to add to adversary party",
+            170, 480,
+            arcade.color.BLACK_LEATHER_JACKET,
+            12, 400,
+            "center",
+            "courier new")
+        arcade.draw_text(
+            self.text,
+            300, 400,
+            arcade.color.BLACK_LEATHER_JACKET,
+            20, 200,
+            "center",
+            "courier new")
+
+        x = 0
+        for pokemon in USERPARTY:
+            arcade.draw_text(f"{pokemon[0]} : {pokemon[1]}",
+                             80, 370 - (20 * x),
+                             arcade.color.GENERIC_VIRIDIAN,
+                             12)
+            x += 1
+
+        x = 0
+        for pokemon in ADVPARTY:
+            arcade.draw_text(f"{pokemon[0]} : {pokemon[1]}",
+                             550, 370 - (20 * x),
+                             arcade.color.ANTIQUE_RUBY,
+                             12)
+            x += 1
+
+        self.drawBtns()
+        self.manager.draw()
+
+        arcade.finish_render()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ENTER and len(USERPARTY) < 6:
+            item = self.text.strip().title()
+            self.loadPokemon(item)
+            USERPARTY.append(self.pokemon[0])
+            self.text = ''
+
+        elif key == arcade.key.TAB and len(ADVPARTY) < 6:
+            item = self.text.strip().title()
+            self.loadPokemon(item)
+            ADVPARTY.append(self.pokemon[0])
+            self.text = ''
+
+        elif key == arcade.key.BACKSPACE:
+            self.text = self.text[0: len(self.text) - 1]
+
+        else:
+            self.text += chr(key)
+
+    def on_update(self, delta_time):
+        if len(USERPARTY) == 6 and len(ADVPARTY) == 6:
+            game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
+
+    def drawBtns(self):
+        style1 = {
+            "font_name": ("courier new"),
+            "font_size": 12,
+            "font_color": arcade.color.BLACK_LEATHER_JACKET,
+            "border_width": 2,
+            "border_color": arcade.color.PURPUREUS,
+            "bg_color": arcade.color.PERSIAN_PINK,
+        }
+        style2 = {
+            "font_name": ("courier new"),
+            "font_size": 12,
+            "font_color": arcade.color.BLACK_LEATHER_JACKET,
+            "border_width": 2,
+            "border_color": arcade.color.ALLOY_ORANGE,
+            "bg_color": arcade.color.YELLOW_ROSE,
+        }
+
+        h_box = arcade.gui.UIBoxLayout(vertical=True, space_between=20)
+        menuBtn = arcade.gui.UIFlatButton(text="Menu", width=200, style=style1)
+        nextBtn = arcade.gui.UIFlatButton(text="NEXT", width=200, style=style2)
+
+        menuBtn.on_click = self.on_click_menubutton
+        nextBtn.on_click = self.on_click_next
+
+        h_box.add(nextBtn)
+        h_box.add(menuBtn)
+
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                align_y=-150,
+                child=h_box)
+        )
+
+    # handle clicks
+    # @menuBtn.event("on_click")
+    def on_click_menubutton(self, event):
+        game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+        self.window.show_view(game_view)
+
+    # @nextBtn.event("on_click")
+    def on_click_next(self, event):
+        print(event)
+        game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+        self.window.show_view(game_view)
+
+    def loadPokemon(self, searchQry=None):
+        self.mySqlConnect()
+        if searchQry is not None:
+            if searchQry.isnumeric():
+                stmt = f"select * from pokemons where `#` = {searchQry};"
+                self.pid = int(searchQry)
+                currPid = True
+            else:
+                stmt = f"select * from pokemons where Name = \"{searchQry}\""
+                currPid = False
+        else:
+            stmt = f"select * from pokemons where `#` = {self.pid};"
+            currPid = True
+
+        self.loadPokemonHelper(stmt, currPid)
+        self.closeSqlConnection()
+
+    def loadPokemonHelper(self, stmt, currPid):
+        if currPid and self.pid in pokedex:
+            self.pokemon = pokedex.get(self.pid)
+        else:
+            self.cur.execute(stmt)
+            self.pokemon = self.cur.fetchall()
+            self.pid = self.pokemon[0][0]
+            pokedex[self.pid] = self.pokemon
+
+    ### MYSQL CONNECTION ###
+    def mySqlConnect(self):
+        self.conn = pymysql.connect(
+            host='localhost',
+            user=self.sqlun,
+            password=self.sqlpw,
+            db='pokemon_server',
+        )
+
+        self.cur = self.conn.cursor()
+
+    def closeSqlConnection(self):
+        self.cur.close()
+        self.conn.close()
+
+
 # COMPARATOR SCREEN
 class CompView(arcade.View):
 
@@ -386,8 +573,6 @@ class CompView(arcade.View):
         self.cur = None
         self.manager = arcade.gui.UIManager()
         self.pokemon = ((1, "Bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        self.userParty = dict()
-        self.advParty = dict()
         self.text = ''
         self.pid = 1
         self.curWidgetXY = ()
@@ -402,28 +587,12 @@ class CompView(arcade.View):
         self.manager.clear()
         self.drawBackground()
         self.establishWidgetSpace()
-        self.renderMenuButton(350, -250)
+        self.renderMenuButton(320, -250)
         self.manager.draw()
         arcade.finish_render()
 
     def on_hide_view(self):
         self.manager.disable()
-
-    def on_key_press(self, key, modifiers):
-        # enter aka search
-        if key == arcade.key.ENTER:
-            searchQry = self.text.strip().title()
-            self.text = ''
-            self.manager.remove(self.dialogueBox)
-            self.renderPokemon(searchQry, self.curWidgetXY[0], self.curWidgetXY[1])
-
-        # backspace
-        elif key == arcade.key.BACKSPACE:
-            self.text = self.text[0: len(self.text) - 1]
-
-        # search query
-        else:
-            self.text += chr(key)
 
     def renderMenuButton(self, x, y):
         style = {
@@ -454,7 +623,7 @@ class CompView(arcade.View):
 
     def drawBackground(self):
         # advBG
-        arcade.create_rectangle_filled(200, 450, 400, 300, arcade.color.ANTIQUE_RUBY, 0).draw()
+        arcade.create_rectangle_filled(200, 450, 400, 300, arcade.color.LIGHT_CRIMSON, 0).draw()
 
         # arcade.create_rectangle_filled(70, 495, 100, 100, arcade.color.WHITE, 0).draw()
         # arcade.create_rectangle_filled(190, 495, 100, 100, arcade.color.WHITE, 0).draw()
@@ -464,7 +633,7 @@ class CompView(arcade.View):
         # arcade.create_rectangle_filled(310, 370, 100, 100, arcade.color.WHITE, 0).draw()
 
         # usrBG
-        arcade.create_rectangle_filled(600, 450, 400, 300, arcade.color.GENERIC_VIRIDIAN, 0).draw()
+        arcade.create_rectangle_filled(600, 450, 400, 300, arcade.color.LIGHT_MOSS_GREEN, 0).draw()
 
         # arcade.create_rectangle_filled(480, 70, 100, 100, arcade.color.WHITE, 0).draw()
         # arcade.create_rectangle_filled(600, 70, 100, 100, arcade.color.WHITE, 0).draw()
@@ -496,65 +665,73 @@ class CompView(arcade.View):
 
     # top left widget : adversary party
     def topLeftWidget(self):
-        advPartyLabelBorder = arcade.gui.UIBorder(
-            arcade.gui.UITextArea(text="    Adversary Party",
-                                  width=400,
-                                  height=25,
-                                  font_size=12,
-                                  text_color=arcade.color.WHITE,
-                                  font_name="courier new"))
+        advPartyLabel = arcade.gui.UITextArea(
+            text="    Adversary Party",
+            width=400,
+            height=25,
+            font_size=12,
+            text_color=arcade.color.BLACK_LEATHER_JACKET,
+            font_name="courier new")
 
         adversaryParty = arcade.gui.UIBoxLayout(x=0, y=300, space_between=20)
         advTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
         advBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
 
-        adv1 = arcade.gui.UIInteractiveWidget()
-        adv2 = arcade.gui.UIInteractiveWidget()
-        adv3 = arcade.gui.UIInteractiveWidget()
-        adv4 = arcade.gui.UIInteractiveWidget()
-        adv5 = arcade.gui.UIInteractiveWidget()
-        adv6 = arcade.gui.UIInteractiveWidget()
+        if len(ADVPARTY) > 0:
+            advSprite1 = self.renderPokemon(ADVPARTY[0][0])
+        else:
+            advSprite1 = arcade.Sprite()
+        if len(ADVPARTY) > 0:
+            advSprite2 = self.renderPokemon(ADVPARTY[1][0])
+        else:
+            advSprite2 = arcade.Sprite()
+        if len(ADVPARTY) > 0:
+            advSprite3 = self.renderPokemon(ADVPARTY[2][0])
+        else:
+            advSprite3 = arcade.Sprite()
+        if len(ADVPARTY) > 0:
+            advSprite4 = self.renderPokemon(ADVPARTY[3][0])
+        else:
+            advSprite4 = arcade.Sprite()
+        if len(ADVPARTY) > 0:
+            advSprite5 = self.renderPokemon(ADVPARTY[4][0])
+        else:
+            advSprite5 = arcade.Sprite()
+        if len(ADVPARTY) > 0:
+            advSprite6 = self.renderPokemon(ADVPARTY[5][0])
+        else:
+            advSprite6 = arcade.Sprite()
 
-        adv1.on_click = self.onClickAdjustAdvParty
-        adv2.on_click = self.onClickAdjustAdvParty
-        adv3.on_click = self.onClickAdjustAdvParty
-        adv4.on_click = self.onClickAdjustAdvParty
-        adv5.on_click = self.onClickAdjustAdvParty
-        adv6.on_click = self.onClickAdjustAdvParty
+        adv1 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite1))
+        adv2 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite2))
+        adv3 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite3))
+        adv4 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite4))
+        adv5 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite5))
+        adv6 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=advSprite6))
 
-        adv1Border = arcade.gui.UIBorder(child=adv1)
-        adv2Border = arcade.gui.UIBorder(child=adv2)
-        adv3Border = arcade.gui.UIBorder(child=adv3)
-        adv4Border = arcade.gui.UIBorder(child=adv4)
-        adv5Border = arcade.gui.UIBorder(child=adv5)
-        adv6Border = arcade.gui.UIBorder(child=adv6)
+        advTopRow.add(adv1)
+        advTopRow.add(adv2)
+        advTopRow.add(adv3)
+        advBottomRow.add(adv4)
+        advBottomRow.add(adv5)
+        advBottomRow.add(adv6)
 
-        advTopRow.add(adv1Border)
-        advTopRow.add(adv2Border)
-        advTopRow.add(adv3Border)
-        advBottomRow.add(adv4Border)
-        advBottomRow.add(adv5Border)
-        advBottomRow.add(adv6Border)
-
-        adversaryParty.add(advPartyLabelBorder)
+        adversaryParty.add(advPartyLabel)
         adversaryParty.add(advTopRow)
         adversaryParty.add(arcade.gui.UIPadding(child=advBottomRow, padding=(0, 0, 20, 0)))
 
-        adversaryPartyBorder = arcade.gui.UIBorder(child=adversaryParty)
-
-        return adversaryPartyBorder
+        return adversaryParty
 
     # bottom left widget : calculations buttons
     def bottomLeftWidget(self):
         calcBox = arcade.gui.UIBoxLayout()
-        calcLabel = arcade.gui.UIBorder(
-            arcade.gui.UITextArea(
-                text="    Calculations: ",
-                width=400,
-                height=25,
-                font_size=12,
-                text_color=arcade.color.BLACK,
-                font_name="courier new"))
+        calcLabel = arcade.gui.UITextArea(
+            text="    Calculations: ",
+            width=400,
+            height=25,
+            font_size=12,
+            text_color=arcade.color.BLACK,
+            font_name="courier new")
 
         style = {
             "font_name": ("courier new"),
@@ -567,167 +744,102 @@ class CompView(arcade.View):
 
         typeAdvBtn = arcade.gui.UIFlatButton(text="Type Advantage", style=style)
         bestAdtnBtn = arcade.gui.UIFlatButton(text="Best Type Addition", style=style)
-        calcBtnSpace = arcade.gui.UIBorder(
-            child=arcade.gui.UIPadding(
-                child=arcade.gui.UIBoxLayout(
-                    space_between=20,
-                    vertical=False,
-                    children=(typeAdvBtn, bestAdtnBtn)),
-                padding=(105, 40, 105, 40)))
+        calcBtnSpace = arcade.gui.UIPadding(
+            child=arcade.gui.UIBoxLayout(
+                space_between=20,
+                vertical=False,
+                children=(typeAdvBtn, bestAdtnBtn)),
+            padding=(105, 40, 105, 40))
 
         calcBox.add(calcLabel)
         calcBox.add(calcBtnSpace)
 
-        calcBoxBorder = arcade.gui.UIBorder(child=calcBox)
-
-        return calcBoxBorder
+        return calcBox
 
     # top right widget : user party
     def topRightWidget(self):
-        myTeamLabel = arcade.gui.UIBorder(
-            child=arcade.gui.UILabel(
-                text="    My Team",
-                width=400,
-                height=25,
-                font_size=12,
-                font_name="courier new"))
+        myTeamLabel = arcade.gui.UILabel(
+            text="    My Team",
+            width=400,
+            height=25,
+            font_size=12,
+            font_name="courier new",
+            text_color=arcade.color.BLACK_LEATHER_JACKET)
 
         userParty = arcade.gui.UIBoxLayout(x=400, y=300, space_between=20)
         userTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
         userBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
 
-        user1 = arcade.gui.UIInteractiveWidget()
-        user2 = arcade.gui.UIInteractiveWidget()
-        user3 = arcade.gui.UIInteractiveWidget()
-        user4 = arcade.gui.UIInteractiveWidget()
-        user5 = arcade.gui.UIInteractiveWidget()
-        user6 = arcade.gui.UIInteractiveWidget()
+        if len(USERPARTY) > 0:
+            userSprite1 = self.renderPokemon(USERPARTY[0][0])
+        else:
+            userSprite1 = arcade.Sprite()
+        if len(USERPARTY) > 0:
+            userSprite2 = self.renderPokemon(USERPARTY[1][0])
+        else:
+            userSprite2 = arcade.Sprite()
+        if len(USERPARTY) > 0:
+            userSprite3 = self.renderPokemon(USERPARTY[2][0])
+        else:
+            userSprite3 = arcade.Sprite()
+        if len(USERPARTY) > 0:
+            userSprite4 = self.renderPokemon(USERPARTY[3][0])
+        else:
+            userSprite4 = arcade.Sprite()
+        if len(USERPARTY) > 0:
+            userSprite5 = self.renderPokemon(USERPARTY[4][0])
+        else:
+            userSprite5 = arcade.Sprite()
+        if len(USERPARTY) > 0:
+            userSprite6 = self.renderPokemon(USERPARTY[5][0])
+        else:
+            userSprite6 = arcade.Sprite()
 
-        user1.on_click = self.onClickAdjustUserParty
-        user2.on_click = self.onClickAdjustUserParty
-        user3.on_click = self.onClickAdjustUserParty
-        user4.on_click = self.onClickAdjustUserParty
-        user5.on_click = self.onClickAdjustUserParty
-        user6.on_click = self.onClickAdjustUserParty
+        user1 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite1))
+        user2 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite2))
+        user3 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite3))
+        user4 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite4))
+        user5 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite5))
+        user6 = arcade.gui.UIBorder(child=arcade.gui.UISpriteWidget(sprite=userSprite6))
 
-        user1Border = arcade.gui.UIBorder(child=user1)
-        user2Border = arcade.gui.UIBorder(child=user2)
-        user3Border = arcade.gui.UIBorder(child=user3)
-        user4Border = arcade.gui.UIBorder(child=user4)
-        user5Border = arcade.gui.UIBorder(child=user5)
-        user6Border = arcade.gui.UIBorder(child=user6)
-
-        userTopRow.add(user1Border)
-        userTopRow.add(user2Border)
-        userTopRow.add(user3Border)
-        userBottomRow.add(user4Border)
-        userBottomRow.add(user5Border)
-        userBottomRow.add(user6Border)
+        userTopRow.add(user1)
+        userTopRow.add(user2)
+        userTopRow.add(user3)
+        userBottomRow.add(user4)
+        userBottomRow.add(user5)
+        userBottomRow.add(user6)
 
         userParty.add(myTeamLabel)
         userParty.add(userTopRow)
         userParty.add(arcade.gui.UIPadding(child=userBottomRow, padding=(0, 0, 20, 0)))
 
-        userPartyBorder = arcade.gui.UIBorder(child=userParty)
-
-        return userPartyBorder
+        return userParty
 
     # bottom right widget : generated reports
     def bottomRightWidget(self):
         reportsBox = arcade.gui.UIBoxLayout()
-        reportsLabel = arcade.gui.UIBorder(
-            arcade.gui.UITextArea(
-                text="    Reports: ",
-                width=400,
-                height=25,
-                font_size=12,
-                text_color=arcade.color.BLACK,
-                font_name="courier new"))
+        reportsLabel = arcade.gui.UITextArea(
+            text="    Reports: ",
+            width=400,
+            height=25,
+            font_size=12,
+            text_color=arcade.color.BLACK,
+            font_name="courier new")
 
         # TODO : text = sql procedure to get calc results
         text = "reports.............:("
-        repsRes = arcade.gui.UIBorder(child=arcade.gui.UITextArea(text=text, height=260))
+        repsRes = arcade.gui.UITextArea(text=text, height=260)
 
         reportsBox.add(reportsLabel)
         reportsBox.add(repsRes)
-        reportsBoxBorder = arcade.gui.UIBorder(child=reportsBox)
 
-        return reportsBoxBorder
+        return reportsBox
 
-    def onClickAdjustAdvParty(self, event):
-        print(event)
-        self.onClickAdjustParty(event)
-        self.advParty[self.pid] = self.pokemon
-
-    def onClickAdjustUserParty(self, event):
-        self.onClickAdjustParty(event)
-        self.userParty[self.pid] = self.pokemon
-
-    def onClickAdjustParty(self, event):
-        #print(event)
-        rect = arcade.gui.UISpace(event.x, event.y, 100, 100, arcade.color.FLORAL_WHITE)
-        prompt = arcade.gui.UIInputText(event.x, event.y, 100, 100,
-                                        "Type pokemon name or id : ",
-                                        "courier new",
-                                        12, arcade.color.GREEN, True)
-        #text = arcade.gui.UITextArea(width=100, text=self.text, text_color=arcade.color.GREEN, multiline=True)
-        self.dialogueBox = arcade.gui.UIWidget(children=(rect, prompt))
-        self.manager.add(self.dialogueBox)
-        self.curWidgetXY = (event.x, event.y)
-        arcade.draw_text(self.text, event.x + 10, event.y + 10, arcade.color.GREEN, 20, 100, multiline=True)
-        print(self.text)
-
-    def renderPokemon(self, searchQry, cx, cy):
-        self.mySqlConnect()
-        self.loadPokemon(searchQry)
-        self.closeSqlConnection()
-
-        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pid}.png")
-        sprite = arcade.load_texture(spritePath)
-        spriteScale = self.WIDTH / (sprite.width * 8)
-        arcade.draw_scaled_texture_rectangle(cx,
-                                             cy,
-                                             sprite,
-                                             spriteScale)
-
-    def loadPokemon(self, searchQry=None):
-        if searchQry is not None:
-            if searchQry.isnumeric():
-                stmt = f"select * from pokemons where `#` = {searchQry};"
-                self.pid = int(searchQry)
-                currPid = True
-            else:
-                stmt = f"select * from pokemons where Name = \"{searchQry}\""
-                currPid = False
-        else:
-            stmt = f"select * from pokemons where `#` = {self.pid};"
-            currPid = True
-
-        self.loadPokemonHelper(stmt, currPid)
-
-    def loadPokemonHelper(self, stmt, currPid):
-        if currPid and self.pid in pokedex:
-            self.pokemon = pokedex.get(self.pid)
-        else:
-            self.cur.execute(stmt)
-            self.pokemon = self.cur.fetchall()
-            self.pid = self.pokemon[0][0]
-            pokedex[self.pid] = self.pokemon
-
-    ### MYSQL CONNECTION ###
-    def mySqlConnect(self):
-        self.conn = pymysql.connect(
-            host='localhost',
-            user=self.sqlun,
-            password=self.sqlpw,
-            db='pokemon_server',
-        )
-
-        self.cur = self.conn.cursor()
-
-    def closeSqlConnection(self):
-        self.cur.close()
-        self.conn.close()
+    def renderPokemon(self, pid):
+        spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{pid}.png")
+        tex = arcade.load_texture(spritePath)
+        spriteScale = self.WIDTH / (tex.width * 8)
+        return arcade.Sprite(spritePath, spriteScale)
 
 
 ### SCRIPTING ###
