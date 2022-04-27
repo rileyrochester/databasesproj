@@ -11,6 +11,7 @@ import pymysql
 WIDTH = 800
 HEIGHT = 600
 TITLE = "Pokédex 2: the SQL"
+userId = None
 pokedex = dict()
 USERPARTY = []
 ADVPARTY = []
@@ -187,7 +188,7 @@ class PokedexView(arcade.View):
         self.manager = arcade.gui.UIManager()
         self.conn = None
         self.cur = None
-        self.pokemon = (1, "bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.pokemon = ((1, "bulbasaur", 0, 0), (0, 0, 0, 0, 0, 0, 0, 0))
         self.text = ''
 
     def on_show(self):
@@ -223,12 +224,10 @@ class PokedexView(arcade.View):
         arcade.draw_text("sp def:", 547, 258, arcade.color.WHITE, 8, font_name="courier new")
         arcade.draw_text("speed:", 470, 260, arcade.color.WHITE, 8, font_name="courier new")
         arcade.draw_text("generation", 125, 150, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text("legendary:", 200, 230, arcade.color.BLACK, 8, font_name="courier new")
+        # arcade.draw_text("legendary:", 200, 230, arcade.color.BLACK, 8, font_name="courier new")
 
     def renderPokemon(self):
-        self.mySqlConnect()
         self.loadPokemon()
-        self.closeSqlConnection()
 
         spritePath = pkg_resources.resource_filename("Pokedex", f"imgs/pokemon/{self.pokemon[0][0]}.png")
         sprite = arcade.load_texture(spritePath)
@@ -240,36 +239,40 @@ class PokedexView(arcade.View):
 
         info = f"{self.pokemon[0][0]} {self.pokemon[0][1]}"
 
-        infoArea = arcade.gui.UITextArea(x=480,
-                                         y=330,
+        infoArea = arcade.gui.UITextArea(x=475,
+                                         y=335,
+                                         width=250,
+                                         height=45,
                                          text=info,
                                          font_size=16,
                                          font_name=("courier new"),
-                                         text_color=arcade.color.WHITE)
+                                         text_color=arcade.color.WHITE,
+                                         multiline=True)
         self.manager.add(infoArea)
 
-        arcade.draw_text(f"{self.pokemon[0][2]}",  # "type 1:",
+        arcade.draw_text(f"{self.pokemon[0][3]}",  # "type 1:",
                          490, 142, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][3]}",  # "type 2:",
-                         605, 142, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][4]}",  # "total:",
+        # arcade.draw_text(f"{self.pokemon[0][3]}",  # "type 2:",
+        #                  605, 142, arcade.color.WHITE, 8, font_name="courier new")
+        arcade.draw_text(f"{self.pokemon[1][1]}",  # "total:",
                          513, 205, arcade.color.BLACK, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][5]}",  # "hp:",
+        arcade.draw_text(f"{self.pokemon[1][2]}",  # "hp:",
                          517, 290, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][6]}",  # "atk:",
+        arcade.draw_text(f"{self.pokemon[1][3]}",  # "atk:",
                          603, 290, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][8]}",  # "sp atk:",
+        arcade.draw_text(f"{self.pokemon[1][5]}",  # "sp atk:",
                          645, 290, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][7]}",  # "def:",
+        arcade.draw_text(f"{self.pokemon[1][4]}",  # "def:",
                          603, 260, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][9]}",  # "sp def:",
+        arcade.draw_text(f"{self.pokemon[1][6]}",  # "sp def:",
                          645, 260, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][10]}",  # "speed:",
+        arcade.draw_text(f"{self.pokemon[1][7]}",  # "speed:",
                          517, 260, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][11]}",  # "generation",
+        arcade.draw_text(f"{self.pokemon[0][2]}",  # "generation",
                          148, 175, arcade.color.WHITE, 8, font_name="courier new")
-        arcade.draw_text(f"{self.pokemon[0][12]}",  # "legendary:",
-                         270, 230, arcade.color.BLACK, 8, font_name="courier new")
+        # arcade.draw_text(f"{self.pokemon[0][12]}",  # "legendary:",
+        #                  270, 230, arcade.color.BLACK, 8, font_name="courier new")
+        pass
 
     def renderMenuButton(self, x, y):
         style = {
@@ -301,9 +304,9 @@ class PokedexView(arcade.View):
     def on_key_press(self, key, modifiers):
         # arrow right
         if key == arcade.key.RIGHT:
-            # note : max should be 721 but workbench is fucking stupid and trying to import
+            # note : max should be 721 but workbench is stupid and trying to import
             # a csv is like trying to scrape plastic off a frying pan
-            if self.pid == 663:
+            if self.pid == 648:
                 self.pid = 1
             else:
                 self.pid += 1
@@ -311,7 +314,7 @@ class PokedexView(arcade.View):
         # arrow left
         elif key == arcade.key.LEFT:
             if self.pid == 1:
-                self.pid = 663
+                self.pid = 648
             else:
                 self.pid -= 1
 
@@ -319,9 +322,7 @@ class PokedexView(arcade.View):
         elif key == arcade.key.ENTER:
             searchQry = self.text.strip().title()
             self.text = ''
-            self.mySqlConnect()
             self.loadPokemon(searchQry)
-            self.closeSqlConnection()
 
         # backspace
         elif key == arcade.key.BACKSPACE:
@@ -335,6 +336,52 @@ class PokedexView(arcade.View):
         if key == arcade.key.RIGHT or key == arcade.key.LEFT:
             self.renderPokemon()
 
+    def loadPokemon(self, searchQry=None):
+        self.mySqlConnect()
+
+        if searchQry is not None:
+            if searchQry.isnumeric():
+                self.pid = int(searchQry)
+
+                if self.pid in pokedex:
+                    self.pokemon = pokedex.get(self.pid)
+                else:
+                    self.cur.callproc('findPokemonByID', [self.pid])
+                    self.pokemon = self.cur.fetchall()
+                    self.pid = self.pokemon[0][0]
+
+                    self.cur.callproc('findPokemonPowersByID', [self.pid])
+                    powers = self.cur.fetchall()
+                    self.pokemon += powers
+
+                    pokedex[self.pid] = self.pokemon
+            else:
+                self.cur.callproc('findPokemonByName', [searchQry])
+                self.pokemon = self.cur.fetchall()
+                self.pid = self.pokemon[0][0]
+
+                self.cur.callproc('findPokemonPowersByID', [self.pid])
+                powers = self.cur.fetchall()
+                self.pokemon += powers
+
+                pokedex[self.pid] = self.pokemon
+        else:
+            if self.pid in pokedex:
+                self.pokemon = pokedex.get(self.pid)
+            else:
+                self.cur.callproc('findPokemonByID', [self.pid])
+                self.pokemon = self.cur.fetchall()
+                print(self.pokemon)
+                self.pid = self.pokemon[0][0]
+
+                self.cur.callproc('findPokemonPowersByID', [self.pid])
+                powers = self.cur.fetchall()
+                self.pokemon += powers
+
+                pokedex[self.pid] = self.pokemon
+
+        self.closeSqlConnection()
+
     ### SQL INTERACTIONS ###
     def mySqlConnect(self):
         self.conn = pymysql.connect(
@@ -346,36 +393,13 @@ class PokedexView(arcade.View):
 
         self.cur = self.conn.cursor()
 
-    def loadPokemon(self, searchQry=None):
-        if searchQry is not None:
-            if searchQry.isnumeric():
-                stmt = f"select * from pokemons where `#` = {searchQry};"
-                self.pid = int(searchQry)
-                currPid = True
-            else:
-                stmt = f"select * from pokemons where Name = \"{searchQry}\""
-                currPid = False
-        else:
-            stmt = f"select * from pokemons where `#` = {self.pid};"
-            currPid = True
-
-        self.loadPokemonHelper(stmt, currPid)
-
-    def loadPokemonHelper(self, stmt, currPid):
-        if currPid and self.pid in pokedex:
-            self.pokemon = pokedex.get(self.pid)
-        else:
-            self.cur.execute(stmt)
-            self.pokemon = self.cur.fetchall()
-            self.pid = self.pokemon[0][0]
-            pokedex[self.pid] = self.pokemon
-
     def closeSqlConnection(self):
         self.cur.close()
         self.conn.close()
 
 
 # GET INFO SCREEN
+# creates user (id=1) and adversary (id=2) teams in db
 class GetInfoView(arcade.View):
 
     def __init__(self, WIDTH, HEIGHT, sqlun, sqlpw):
@@ -388,11 +412,12 @@ class GetInfoView(arcade.View):
         self.cur = None
         self.manager = arcade.gui.UIManager()
         self.text = ""
-        self.pokemon = ((1, "Bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        self.pokemon = ((1, "Bulbasaur", 0, 0), (0, 0, 0, 0, 0, 0, 0, 0))
         self.pid = 1
+        self.createDBTeams()
 
     def on_show(self):
-        arcade.set_background_color(arcade.color.PAPAYA_WHIP)
+        arcade.set_background_color(arcade.color.ALMOND)
         self.manager.enable()
 
     def on_hide_view(self):
@@ -403,13 +428,19 @@ class GetInfoView(arcade.View):
         self.manager.clear()
 
         arcade.draw_text(
+            f"type your name and hit control : ",
+            60, 600,
+            arcade.color.BLACK_LEATHER_JACKET,
+            12, 700,
+            "center",
+            "courier new")
+        arcade.draw_text(
             f"type name or id of next party member : ",
             60, 520,
             arcade.color.BLACK_LEATHER_JACKET,
             18, 700,
             "center",
-            "courier new",
-        )
+            "courier new")
         arcade.draw_text(
             f"press ENTER to add to user party, press TAB to add to adversary party",
             170, 480,
@@ -452,12 +483,19 @@ class GetInfoView(arcade.View):
             self.loadPokemon(item)
             USERPARTY.append(self.pokemon[0])
             self.text = ''
+            self.addToTeam(self.pokemon, 1)
 
         elif key == arcade.key.TAB and len(ADVPARTY) < 6:
             item = self.text.strip().title()
             self.loadPokemon(item)
             ADVPARTY.append(self.pokemon[0])
             self.text = ''
+            self.addToTeam(self.pokemon, 2)
+
+        elif key == arcade.key.LCTRL or key == arcade.key.RCTRL :
+            item = self.text.strip().title()
+            self.text = ''
+            userId = item 
 
         elif key == arcade.key.BACKSPACE:
             self.text = self.text[0: len(self.text) - 1]
@@ -520,29 +558,59 @@ class GetInfoView(arcade.View):
 
     def loadPokemon(self, searchQry=None):
         self.mySqlConnect()
+
         if searchQry is not None:
             if searchQry.isnumeric():
-                stmt = f"select * from pokemons where `#` = {searchQry};"
                 self.pid = int(searchQry)
-                currPid = True
-            else:
-                stmt = f"select * from pokemons where Name = \"{searchQry}\""
-                currPid = False
-        else:
-            stmt = f"select * from pokemons where `#` = {self.pid};"
-            currPid = True
 
-        self.loadPokemonHelper(stmt, currPid)
+                if self.pid in pokedex:
+                    self.pokemon = pokedex.get(self.pid)
+                else:
+                    self.cur.callproc('findPokemonByID', [self.pid])
+                    self.pokemon = self.cur.fetchall()
+                    self.pid = self.pokemon[0][0]
+
+                    self.cur.callproc('findPokemonPowersByID', [self.pid])
+                    powers = self.cur.fetchall()
+                    self.pokemon += powers
+
+                    pokedex[self.pid] = self.pokemon
+            else:
+                self.cur.callproc('findPokemonByName', [searchQry])
+                self.pokemon = self.cur.fetchall()
+                self.pid = self.pokemon[0][0]
+
+                self.cur.callproc('findPokemonPowersByID', [self.pid])
+                powers = self.cur.fetchall()
+                self.pokemon += powers
+
+                pokedex[self.pid] = self.pokemon
+        else:
+            if self.pid in pokedex:
+                self.pokemon = pokedex.get(self.pid)
+            else:
+                self.cur.callproc('findPokemonByID', [self.pid])
+                self.pokemon = self.cur.fetchall()
+                print(self.pokemon)
+                self.pid = self.pokemon[0][0]
+
+                self.cur.callproc('findPokemonPowersByID', [self.pid])
+                powers = self.cur.fetchall()
+                self.pokemon += powers
+
+                pokedex[self.pid] = self.pokemon
+
         self.closeSqlConnection()
 
-    def loadPokemonHelper(self, stmt, currPid):
-        if currPid and self.pid in pokedex:
-            self.pokemon = pokedex.get(self.pid)
-        else:
-            self.cur.execute(stmt)
-            self.pokemon = self.cur.fetchall()
-            self.pid = self.pokemon[0][0]
-            pokedex[self.pid] = self.pokemon
+    def createDBTeams(self):
+        self.mySqlConnect()
+        self.cur.callproc("createTeam", [userId])
+        self.closeSqlConnection()
+
+    def addToTeam(self, pokemon, teamId):
+        self.mySqlConnect()
+        self.cur.callproc("addTeamMember", [pokemon[0], teamId])
+        self.closeSqlConnection()
 
     ### MYSQL CONNECTION ###
     def mySqlConnect(self):
@@ -572,11 +640,10 @@ class CompView(arcade.View):
         self.conn = None
         self.cur = None
         self.manager = arcade.gui.UIManager()
-        self.pokemon = ((1, "Bulbasaur", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        self.pokemon = ((1, "Bulbasaur", 0, 0), (0, 0, 0, 0, 0, 0, 0, 0))
         self.text = ''
         self.pid = 1
-        self.curWidgetXY = ()
-        self.dialogueBox = None
+        self.resp = ""
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALMOND)
@@ -744,6 +811,21 @@ class CompView(arcade.View):
 
         typeAdvBtn = arcade.gui.UIFlatButton(text="Type Advantage", style=style)
         bestAdtnBtn = arcade.gui.UIFlatButton(text="Best Type Addition", style=style)
+
+        @typeAdvBtn.event("on_click")
+        def clickTypeAdvBtn(event) :
+            self.mySqlConnect()
+            self.cur.callproc("compareTeams", [1, 2])
+            self.resp = self.cur.fetchall()
+            self.closeSqlConnection()
+
+        @bestAdtnBtn.event("on_click")
+        def clickBestAdtnBtn(event) :
+            self.mySqlConnect()
+            self.cur.callproc("reccomendTeamMember", [1])
+            self.resp = self.cur.fetchall()
+            self.closeSqlConnection()
+
         calcBtnSpace = arcade.gui.UIPadding(
             child=arcade.gui.UIBoxLayout(
                 space_between=20,
@@ -826,9 +908,7 @@ class CompView(arcade.View):
             text_color=arcade.color.BLACK,
             font_name="courier new")
 
-        # TODO : text = sql procedure to get calc results
-        text = "reports.............:("
-        repsRes = arcade.gui.UITextArea(text=text, height=260)
+        repsRes = arcade.gui.UITextArea(text=self.resp, height=260)
 
         reportsBox.add(reportsLabel)
         reportsBox.add(repsRes)
@@ -841,6 +921,20 @@ class CompView(arcade.View):
         spriteScale = self.WIDTH / (tex.width * 8)
         return arcade.Sprite(spritePath, spriteScale)
 
+    ### MYSQL CONNECTION ###
+    def mySqlConnect(self):
+        self.conn = pymysql.connect(
+            host='localhost',
+            user=self.sqlun,
+            password=self.sqlpw,
+            db='pokemon_server',
+        )
+
+        self.cur = self.conn.cursor()
+
+    def closeSqlConnection(self):
+        self.cur.close()
+        self.conn.close()
 
 ### SCRIPTING ###
 
