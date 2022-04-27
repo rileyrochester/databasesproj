@@ -87,11 +87,23 @@ FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
+-- creates a team
+DELIMITER //
+CREATE procedure createTeam(userId INT)
+BEGIN
+INSERT INTO team(teamId, userId) VALUES (userId);
+END//
+
 -- adds a teammember to team
 DELIMITER //
-CREATE procedure addTeamMember(pId INT, teamId INT, item VARCHAR(32), level INT, health INT)
+CREATE procedure addTeamMember(pId INT, teamId INT, item VARCHAR(32), level INT)
 BEGIN
-INSERT INTO teamMember(pId, teamId, item, level, health) VALUES (pId, teamId, item, level, health);
+DECLARE healthTemp INT;
+
+SELECT hp INTO healthTemp FROM powers
+WHERE pId = pId;
+
+INSERT INTO teamMember(pId, teamId, item, level, health) VALUES (pId, teamId, item, level, healthTemp);
 END//
 
 -- deletes a teammember from team
@@ -180,4 +192,3 @@ CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
 BEGIN
 SELECT * FROM pokemon WHERE pName = pokemonName;
 END//
-
