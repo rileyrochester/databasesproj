@@ -1,23 +1,21 @@
-drop database pokemon_server;
-create database pokemon_server;
 use pokemon_server;
 
-CREATE TABLE IF NOT EXISTS user
+CREATE TABLE user
 (
-userId INT PRIMARY KEY NOT NULL,
+userId INT auto_increment PRIMARY KEY NOT NULL,
 name VARCHAR(32) NOT NULL,
 numPokemon INT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS admin
+CREATE TABLE admin
 (
-userId INT NOT NULL,
+userId INT auto_increment NULL,
 name VARCHAR(32) NOT NULL,
 FOREIGN KEY (userId) REFERENCES user(userId)
 	ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS type
+CREATE TABLE type
 (
 name VARCHAR(32) PRIMARY KEY NOT NULL,
 advantages VARCHAR(64) NOT NULL,
@@ -25,7 +23,7 @@ disadvantages VARCHAR(64) NOT NULL,
 advantageScore INT NOT NULL
 );
     
-CREATE TABLE IF NOT EXISTS pokemon
+CREATE TABLE pokemon
 (
 pID INT auto_increment PRIMARY KEY,
 pName VARCHAR(32) NOT NULL,
@@ -35,7 +33,7 @@ FOREIGN KEY (type) REFERENCES type(name)
 	ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS powers
+CREATE TABLE powers
 (
 pId INT auto_increment NOT NULL,
 total INT NOT NULL,
@@ -49,13 +47,13 @@ FOREIGN KEY (pId) REFERENCES pokemon(pId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS item
+CREATE TABLE item
 (
 name VARCHAR(32) PRIMARY KEY,
 category VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS team
+CREATE TABLE team
 (
 teamId INT auto_increment PRIMARY KEY,
 userId INT,
@@ -63,7 +61,7 @@ FOREIGN KEY (userId) REFERENCES user(userId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS teamMember
+CREATE TABLE teamMember
 (
 pId INT auto_increment NOT NULL,
 teamId INT NOT NULL,
@@ -78,7 +76,7 @@ FOREIGN KEY (item) REFERENCES item(name)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS battle
+CREATE TABLE battle
 (
 playerTeam INT,
 opponentTeam INT,
@@ -91,16 +89,16 @@ FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
 
 -- creates a user
 DELIMITER //
-CREATE procedure createUser(userID INT, userName VARCHAR(32))
+CREATE procedure createUser(name VARCHAR(32))
 BEGIN
-INSERT INTO user(userId, name, numPokemon) VALUES (userID, userName, 0);
+INSERT INTO team(name, numPokemon) VALUES(name, 0);
 END//
 
 -- creates a team
 DELIMITER //
 CREATE procedure createTeam(userId INT)
 BEGIN
-INSERT INTO team(teamId, userId) VALUES (userId);
+INSERT INTO team(userId) VALUES (userId);
 END//
 
 -- adds a teammember to team
