@@ -1,0 +1,19 @@
+name,advantages,disadvantages,advantageScore
+Normal,none,"rock, ghost, steel",1600
+Fire,"grass, ice, bug, steel","fire, water, rock, dragon",2000
+Water,"fire, ground, rock","water, grass, dragon",1950
+Electric,"water, flying, ","electric, grass, ground, flying",1750
+Grass,"water, ground, rock","fire, grass, posion, flying, bug",1750
+Ice,"grass, ground, flying, dragon","fire, water, ice, steel",2000
+Fighting,"normal, grass, rock, dark steel","poison, flying, psychic, bug, ghost, fairy",1950
+Poison,"grass, fairy","poison, ground, rock, ghost, steel",1700
+Ground,"fire, electric, poison, rock, steel","grass, flying, bug",2100
+Flying,"grass, fighting, bug","electric, rock, steel",1950
+Psychic,"fighting, poison","psychic, dark, steel",1800
+Bug,"grass, psychic, dark","fire, fighting, poison, flying, ghost, steel, fairy",1750
+Rock,"fire, ice, fly, bug","fighting, ground, steel",2050
+Ghost,"psychic, ghost","normal, dark",1850
+Dragon,dragon,"steel, fairy",1750
+Dark,"psychic, ghost","fighting, dark, fairy",1850
+Steel,"ice, rock, fairy","fire, water, electric, steel",1900
+Fairy,"fighting, dragon, dark","fire, poison, steel",1950
