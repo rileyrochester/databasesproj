@@ -108,11 +108,20 @@ DELIMITER //
 CREATE procedure addTeamMember(pId INT, teamId INT, item VARCHAR(32), level INT)
 BEGIN
 DECLARE healthTemp INT;
+DECLARE userIdTemp INT;
 
 SELECT hp INTO healthTemp FROM powers
 WHERE pId = pId;
 
 INSERT INTO teamMember(pId, teamId, item, level, health) VALUES (pId, teamId, item, level, healthTemp);
+
+SELECT teamId INTO userIdTemp FROM team
+INNER JOIN user
+ON team.userId = user.userId
+WHERE team.teamId = teamId;
+
+UPDATE user SET numPokemon = (numPokemon + 1) WHERE userId = userIdTemp;
+
 END//
 
 -- deletes a teammember from team
@@ -128,6 +137,13 @@ CREATE procedure updateTeamMember(teammemberId INT, field VARCHAR(32), newValue 
 BEGIN
 UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
 END //
+
+-- creates a battle
+DELIMITER //
+CREATE procedure createBattle(team1 INT, team2 INT, location VARCHAR(32))
+BEGIN
+INSERT INTO battle(playerTeam, opponentTeam, location) VALUES (team1, team2, location); 
+END//
 
 -- compares type advantages for 2 given teams
 DELIMITER //
@@ -189,29 +205,15 @@ RETURN result;
 END//
 
 -- Finds a pokemon based on a given ID 
-delimiter ;
-drop procedure if exists findPokemonByID;
 DELIMITER //
 CREATE procedure findPokemonByID(pokemonId INT)
 BEGIN
 SELECT * FROM pokemon WHERE pId = pokemonId;
 END//
 
--- Finds a pokemon's powers based on a given ID 
-delimiter ;
-drop procedure if exists findPokemonPowersByID;
+-- Finds a pokemon based on a given name
 DELIMITER //
-CREATE procedure findPokemonPowersByID(pokemonId INT)
-BEGIN
-SELECT * FROM powers WHERE pId = pokemonId;
-END//
-
--- Finds a pokemon based on a given name 
-delimiter ;
-drop procedure if exists findPokemonByName;
-DELIMITER //
-CREATE procedure findPokemonByName(pokemonName VARCHAR(32))
+CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
 BEGIN
 SELECT * FROM pokemon WHERE pName = pokemonName;
 END//
-select * from pokemon;
