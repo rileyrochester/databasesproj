@@ -103,6 +103,7 @@ BEGIN
 INSERT INTO user(name, numPokemon) VALUES(uname, 0);
 END//
 
+
 -- gets a user's id from name 
 DELIMITER //
 CREATE procedure getUserIDFromName(name VARCHAR(32))
@@ -148,9 +149,9 @@ END //
 
 -- update a teammember from team
 DELIMITER //
-CREATE procedure updateTeamMember(teammemberId INT, field VARCHAR(32), newValue INT)
+CREATE procedure updateTeamMember(teamId INT, teammemberId INT, newValue INT)
 BEGIN
-UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
+UPDATE teamMember SET teamMember.level = newValue WHERE teamMember.teamId = teamId AND teammember.pId = teammemberId;
 END //
 
 -- creates a battle
@@ -228,7 +229,7 @@ END//
 
 -- Finds a pokemon based on a given name
 DELIMITER //
-CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
+CREATE procedure findPokemonByName(pokemonName VARCHAR(32))
 BEGIN
 SELECT * FROM pokemon WHERE pName = pokemonName;
 END//
@@ -239,5 +240,3 @@ CREATE procedure findPokemonPowersByID(pokemonId INT)
 BEGIN
 SELECT * FROM powers where pId = pokemonId;
 END//
-delimiter ;
-select * from team;
