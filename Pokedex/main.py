@@ -495,7 +495,9 @@ class GetInfoView(arcade.View):
         elif key == arcade.key.LCTRL or key == arcade.key.RCTRL :
             item = self.text.strip().title()
             self.text = ''
-            userId = item 
+            self.mySqlConnect()
+            self.cur.callproc("createUser", [item])
+            self.closeSqlConnection()
 
         elif key == arcade.key.BACKSPACE:
             self.text = self.text[0: len(self.text) - 1]
