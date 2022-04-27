@@ -127,14 +127,14 @@ DECLARE healthTemp INT;
 DECLARE userIdTemp INT;
 
 SELECT hp INTO healthTemp FROM powers
-WHERE pId = pId;
+WHERE pId = pId LIMIT 1;
 
 INSERT INTO teamMember(pId, teamId, item, level, health) VALUES (pId, teamId, item, level, healthTemp);
 
-SELECT teamId INTO userIdTemp FROM team
+SELECT teamId INTO userIdTemp FROM team 
 INNER JOIN user
 ON team.userId = user.userId
-WHERE team.teamId = teamId;
+WHERE team.teamId = teamId LIMIT 1;
 
 UPDATE user SET numPokemon = (numPokemon + 1) WHERE userId = userIdTemp;
 
