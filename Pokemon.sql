@@ -1,10 +1,10 @@
-drop database pokemon_server;
+-- drop database pokemon_server;
 create database pokemon_server;
 use pokemon_server;
 
 CREATE TABLE IF NOT EXISTS user
 (
-userId INT PRIMARY KEY NOT NULL,
+userId INT auto_increment PRIMARY KEY NOT NULL,
 name VARCHAR(32) NOT NULL,
 numPokemon INT NOT NULL
 );
@@ -89,18 +89,33 @@ FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
+-- gets items
+DELIMITER //
+CREATE procedure getItems()
+BEGIN
+select * from item;
+END//
+
 -- creates a user
 DELIMITER //
-CREATE procedure createUser(userID INT, userName VARCHAR(32))
+CREATE procedure createUser(uname VARCHAR(32))
 BEGIN
-INSERT INTO user(userId, name, numPokemon) VALUES (userID, userName, 0);
+INSERT INTO user(name, numPokemon) VALUES(uname, 0);
+END//
+
+-- gets a user's id from name 
+DELIMITER //
+CREATE procedure getUserIDFromName(name VARCHAR(32))
+BEGIN
+SELECT userId FROM user WHERE user.name = name;
 END//
 
 -- creates a team
 DELIMITER //
 CREATE procedure createTeam(userId INT)
 BEGIN
-INSERT INTO team(teamId, userId) VALUES (userId);
+INSERT INTO team(userId) VALUES (userId);
+select teamId from team where team.userId = userId;
 END//
 
 -- adds a teammember to team
@@ -217,3 +232,12 @@ CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
 BEGIN
 SELECT * FROM pokemon WHERE pName = pokemonName;
 END//
+
+-- Finds a pokemons powers based on a given ID
+DELIMITER //
+CREATE procedure findPokemonPowersByID(pokemonId INT)
+BEGIN
+SELECT * FROM powers where pId = pokemonId;
+END//
+delimiter ;
+select * from team;

@@ -11,11 +11,15 @@ import pymysql
 WIDTH = 800
 HEIGHT = 600
 TITLE = "Pokédex 2: the SQL"
+userName = ""
 userId = None
 pokedex = dict()
+# contains pokedex info regarding the types of pokemon on each team
 USERPARTY = []
 ADVPARTY = []
-
+# contains teamId, etc of teamMembers for each team
+userTeam = dict()
+advTeam = dict()
 
 ### VIEWS ###
 
@@ -414,7 +418,6 @@ class GetInfoView(arcade.View):
         self.text = ""
         self.pokemon = ((1, "Bulbasaur", 0, 0), (0, 0, 0, 0, 0, 0, 0, 0))
         self.pid = 1
-        self.createDBTeams()
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALMOND)
@@ -428,24 +431,24 @@ class GetInfoView(arcade.View):
         self.manager.clear()
 
         arcade.draw_text(
-            f"type your name and hit control : ",
-            60, 600,
+            f"Type your name and hit control : ",
+            140, 550,
             arcade.color.BLACK_LEATHER_JACKET,
-            12, 700,
+            12, 500,
             "center",
             "courier new")
         arcade.draw_text(
-            f"type name or id of next party member : ",
-            60, 520,
+            f"Type name or id of next party member, comma, an item from the list left (or \"none\"), comma, level. ",
+            140, 525,
             arcade.color.BLACK_LEATHER_JACKET,
-            18, 700,
+            12, 500,
             "center",
             "courier new")
         arcade.draw_text(
-            f"press ENTER to add to user party, press TAB to add to adversary party",
-            170, 480,
+            f"Press ENTER to add to user party, press TAB to add to adversary party",
+            140, 470,
             arcade.color.BLACK_LEATHER_JACKET,
-            12, 400,
+            12, 500,
             "center",
             "courier new")
         arcade.draw_text(
@@ -455,11 +458,18 @@ class GetInfoView(arcade.View):
             20, 200,
             "center",
             "courier new")
+        arcade.draw_text(
+            f"{userName}, user no. {userId}",
+            300, 70,
+            arcade.color.BLACK_LEATHER_JACKET,
+            12, 200,
+            "center",
+            "courier new")
 
         x = 0
         for pokemon in USERPARTY:
             arcade.draw_text(f"{pokemon[0]} : {pokemon[1]}",
-                             80, 370 - (20 * x),
+                             130, 370 - (20 * x),
                              arcade.color.GENERIC_VIRIDIAN,
                              12)
             x += 1
@@ -472,6 +482,7 @@ class GetInfoView(arcade.View):
                              12)
             x += 1
 
+        self.drawItemsList()
         self.drawBtns()
         self.manager.draw()
 
@@ -479,24 +490,37 @@ class GetInfoView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ENTER and len(USERPARTY) < 6:
-            item = self.text.strip().title()
-            self.loadPokemon(item)
+            input = self.text.split(",")
+            name = input[0].strip().title()
+            item = input[1].strip().title()
+            level = int(input[2].strip())
+            self.loadPokemon(name)
             USERPARTY.append(self.pokemon[0])
             self.text = ''
-            self.addToTeam(self.pokemon, 1)
+            self.addToTeam(self.pokemon, userTeam.get("id"), item, level)
+            userTeam[self.pokemon[0]] = (self.pokemon, item, level)
 
         elif key == arcade.key.TAB and len(ADVPARTY) < 6:
-            item = self.text.strip().title()
-            self.loadPokemon(item)
+            input = self.text.split(",")
+            name = input[0].strip().title()
+            item = input[1].strip().title()
+            level = int(input[2].strip())
+            self.loadPokemon(name)
             ADVPARTY.append(self.pokemon[0])
             self.text = ''
-            self.addToTeam(self.pokemon, 2)
+            self.addToTeam(self.pokemon, advTeam.get("id"), item, level)
+            advTeam[self.pokemon[0]] = (self.pokemon, item, level)
 
         elif key == arcade.key.LCTRL or key == arcade.key.RCTRL :
-            item = self.text.strip().title()
+            global userName
+            userName = self.text.strip().title()
             self.text = ''
             self.mySqlConnect()
-            self.cur.callproc("createUser", [item])
+            try :
+                self.cur.callproc("createUser", [userName])
+                self.conn.commit()
+            except :
+                self.conn.rollback()
             self.closeSqlConnection()
 
         elif key == arcade.key.BACKSPACE:
@@ -509,6 +533,9 @@ class GetInfoView(arcade.View):
         if len(USERPARTY) == 6 and len(ADVPARTY) == 6:
             game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
             self.window.show_view(game_view)
+        if len(userName) > 0 :
+            if len(userTeam.items()) == 0 :
+                self.createDBTeams()
 
     def drawBtns(self):
         style1 = {
@@ -532,9 +559,6 @@ class GetInfoView(arcade.View):
         menuBtn = arcade.gui.UIFlatButton(text="Menu", width=200, style=style1)
         nextBtn = arcade.gui.UIFlatButton(text="NEXT", width=200, style=style2)
 
-        menuBtn.on_click = self.on_click_menubutton
-        nextBtn.on_click = self.on_click_next
-
         h_box.add(nextBtn)
         h_box.add(menuBtn)
 
@@ -546,17 +570,28 @@ class GetInfoView(arcade.View):
                 child=h_box)
         )
 
-    # handle clicks
-    # @menuBtn.event("on_click")
-    def on_click_menubutton(self, event):
-        game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
-        self.window.show_view(game_view)
+        # handle clicks
+        @menuBtn.event("on_click")
+        def on_click_flatbutton(self, event):
+            game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
 
-    # @nextBtn.event("on_click")
-    def on_click_next(self, event):
-        print(event)
-        game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
-        self.window.show_view(game_view)
+        @nextBtn.event("on_click")
+        def on_click_flatbutton(self, event):
+            print(event)
+            game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
+
+    def drawItemsList(self):
+        self.mySqlConnect()
+        self.cur.callproc("getItems", [])
+        res = self.cur.fetchall()
+        x = 0
+        for row in res :
+            arcade.draw_text(row[0], 15, 580 - x, arcade.color.BLACK_LEATHER_JACKET, 10, 100, "left", "courier new")
+            x += 10
+
+        self.closeSqlConnection()
 
     def loadPokemon(self, searchQry=None):
         self.mySqlConnect()
@@ -593,7 +628,6 @@ class GetInfoView(arcade.View):
             else:
                 self.cur.callproc('findPokemonByID', [self.pid])
                 self.pokemon = self.cur.fetchall()
-                print(self.pokemon)
                 self.pid = self.pokemon[0][0]
 
                 self.cur.callproc('findPokemonPowersByID', [self.pid])
@@ -605,13 +639,30 @@ class GetInfoView(arcade.View):
         self.closeSqlConnection()
 
     def createDBTeams(self):
+        global userId, userName
         self.mySqlConnect()
-        self.cur.callproc("createTeam", [userId])
+        self.cur.callproc("getUserIDFromName", [userName])
+        userId = self.cur.fetchall()[0][0]
+        try :
+            self.cur.callproc("createTeam", [userId])
+            userTeam["id"] = self.cur.fetchall()
+            print(f"user team id : {userTeam.get('id')}")
+            self.cur.callproc("createTeam", [0]) # where 0 is id of adversary
+            advTeam["id"] = self.cur.fetchall()
+            print(f"adv team id : {advTeam.get('id')}")
+            self.cur.callproc("createBattle", [userTeam.get('id'), advTeam.get('id'), "Sinnoh"])
+            self.conn.commit()
+        except :
+            self.conn.rollback()
         self.closeSqlConnection()
 
-    def addToTeam(self, pokemon, teamId):
+    def addToTeam(self, pokemon, teamId, item, level):
         self.mySqlConnect()
-        self.cur.callproc("addTeamMember", [pokemon[0], teamId])
+        try :
+            self.cur.callproc("addTeamMember", [pokemon[0][0], teamId, item, level])
+            self.conn.commit()
+        except :
+            self.conn.rollback()
         self.closeSqlConnection()
 
     ### MYSQL CONNECTION ###
@@ -691,25 +742,97 @@ class CompView(arcade.View):
             self.window.show_view(game_view)
 
     def drawBackground(self):
-        # advBG
         arcade.create_rectangle_filled(200, 450, 400, 300, arcade.color.LIGHT_CRIMSON, 0).draw()
-
-        # arcade.create_rectangle_filled(70, 495, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(190, 495, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(310, 495, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(70, 370, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(190, 370, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(310, 370, 100, 100, arcade.color.WHITE, 0).draw()
-
-        # usrBG
         arcade.create_rectangle_filled(600, 450, 400, 300, arcade.color.LIGHT_MOSS_GREEN, 0).draw()
-
-        # arcade.create_rectangle_filled(480, 70, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(600, 70, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(720, 70, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(480, 190, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(600, 190, 100, 100, arcade.color.WHITE, 0).draw()
-        # arcade.create_rectangle_filled(720, 190, 100, 100, arcade.color.WHITE, 0).draw()
+        # advs
+        advs = list(advTeam.items())
+        print(advs)
+        if len(advs) > 0 : arcade.draw_text(
+            f"lvl {advs[0][3]} {advs[0][0][0]}, {advs[0][2]}",
+            70, 490,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 1 : arcade.draw_text(
+            f"lvl {advs[1][3]} {advs[1][0][0]}, {advs[1][2]}",
+            190, 490,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 2 : arcade.draw_text(
+            f"lvl {advs[2][3]} {advs[2][0][0]}, {advs[2][2]}",
+            310, 490,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 3 : arcade.draw_text(
+            f"lvl {advs[3][3]} {advs[3][0][0]}, {advs[3][2]}",
+            70, 365,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 4 : arcade.draw_text(
+            f"lvl {advs[4][3]} {advs[4][0][0]}, {advs[4][2]}",
+            190, 365,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 5 : arcade.draw_text(
+            f"lvl {advs[5][3]} {advs[5][0][0]}, {advs[5][2]}",
+            310, 365,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        # usrs
+        usrs = list(userTeam.items())
+        if len(usrs) > 0 : arcade.draw_text(
+            f"lvl {usrs[0][3]} {usrs[0][0][0]}, {usrs[0][2]}",
+            480, 65,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(usrs) > 1 : arcade.draw_text(
+            f"lvl {usrs[1][3]} {usrs[1][0][0]}, {usrs[1][2]}",
+            600, 65,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(usrs) > 2 : arcade.draw_text(
+            f"lvl {usrs[2][3]} {usrs[2][0][0]}, {usrs[2][2]}",
+            720, 65,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(usrs) > 3 : arcade.draw_text(
+            f"lvl {usrs[3][3]} {usrs[3][0][0]}, {usrs[3][2]}",
+            480, 185,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(usrs) > 4 : arcade.draw_text(
+            f"lvl {usrs[4][3]} {usrs[4][0][0]}, {usrs[4][2]}",
+            600, 185,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(usrs) > 5 : arcade.draw_text(
+            f"lvl {usrs[5][3]} {usrs[5][0][0]}, {usrs[5][2]}",
+            720, 185,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
 
     def establishWidgetSpace(self):
         h_box = arcade.gui.UIBoxLayout(vertical=False, space_between=0)
@@ -735,7 +858,7 @@ class CompView(arcade.View):
     # top left widget : adversary party
     def topLeftWidget(self):
         advPartyLabel = arcade.gui.UITextArea(
-            text="    Adversary Party",
+            text="    Adversary Team",
             width=400,
             height=25,
             font_size=12,
@@ -815,14 +938,14 @@ class CompView(arcade.View):
         bestAdtnBtn = arcade.gui.UIFlatButton(text="Best Type Addition", style=style)
 
         @typeAdvBtn.event("on_click")
-        def clickTypeAdvBtn(event) :
+        def on_click_flatbutton(event) :
             self.mySqlConnect()
             self.cur.callproc("compareTeams", [1, 2])
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
         @bestAdtnBtn.event("on_click")
-        def clickBestAdtnBtn(event) :
+        def on_click_flatbutton(event) :
             self.mySqlConnect()
             self.cur.callproc("reccomendTeamMember", [1])
             self.resp = self.cur.fetchall()
