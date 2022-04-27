@@ -1,3 +1,6 @@
+-- drop database pokemon_server;
+create database pokemon_server;
+
 use pokemon_server;
 
 CREATE TABLE user
@@ -87,11 +90,25 @@ FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
+-- gets items
+DELIMITER //
+CREATE procedure getItems()
+BEGIN
+select * from item;
+END//
+
 -- creates a user
 DELIMITER //
-CREATE procedure createUser(name VARCHAR(32))
+CREATE procedure createUser(uname VARCHAR(32))
 BEGIN
-INSERT INTO team(name, numPokemon) VALUES(name, 0);
+INSERT INTO user(name, numPokemon) VALUES(uname, 0);
+END//
+
+-- gets a user's id from name 
+DELIMITER //
+CREATE procedure getUserIDFromName(name VARCHAR(32))
+BEGIN
+SELECT userId FROM user WHERE user.name = name;
 END//
 
 -- creates a team
@@ -99,6 +116,7 @@ DELIMITER //
 CREATE procedure createTeam(userId INT)
 BEGIN
 INSERT INTO team(userId) VALUES (userId);
+select teamId from team where team.userId = userId;
 END//
 
 -- adds a teammember to team
@@ -131,9 +149,9 @@ END //
 
 -- update a teammember from team
 DELIMITER //
-CREATE procedure updateTeamMember(teammemberId INT, field VARCHAR(32), newValue INT)
+CREATE procedure updateTeamMember(teamId INT, teammemberId INT, newValue INT)
 BEGIN
-UPDATE teamMember SET field = newValue WHERE teammember.pId = teammemberId;
+UPDATE teamMember SET teamMember.level = newValue WHERE teamMember.teamId = teamId AND teammember.pId = teammemberId;
 END //
 
 -- creates a battle
@@ -211,7 +229,14 @@ END//
 
 -- Finds a pokemon based on a given name
 DELIMITER //
-CREATE procedure findPokemonByName(pokemoneName VARCHAR(32))
+CREATE procedure findPokemonByName(pokemonName VARCHAR(32))
 BEGIN
 SELECT * FROM pokemon WHERE pName = pokemonName;
+END//
+
+-- Finds a pokemons powers based on a given ID
+DELIMITER //
+CREATE procedure findPokemonPowersByID(pokemonId INT)
+BEGIN
+SELECT * FROM powers where pId = pokemonId;
 END//
