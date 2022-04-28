@@ -844,13 +844,17 @@ class CompView(arcade.View):
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
-        if key == arcade.key.D :
+        elif key == arcade.key.D :
             print("b clicked")
             self.mySqlConnect()
             print(userTeam.get('id'))
             self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
+
+        elif key == arcade.key.UP:
+            game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
 
     def renderMenuButton(self, x, y):
         style = {
