@@ -215,7 +215,7 @@ IF (numTeamMembers = 6)
 	THEN SET result = 'Your team is already full';
 ELSE
     SELECT max(total), pokemon.pName INTO pokemonName FROM powers
-	INNER JOIN teamMember
+    INNER JOIN teamMember
     ON powers.pId = teamMember.pId
     INNER JOIN pokemon
     ON teamMember.pId = pokemon.pId;
