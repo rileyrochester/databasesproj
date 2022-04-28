@@ -819,6 +819,7 @@ class CompView(arcade.View):
         self.text = ''
         self.pid = 1
         self.resp = ""
+        self.respIsRec = False
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALMOND)
@@ -843,6 +844,7 @@ class CompView(arcade.View):
             self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
+            self.respIsRec = False
 
         elif key == arcade.key.D :
             print("b clicked")
@@ -851,6 +853,7 @@ class CompView(arcade.View):
             self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
+            self.respIsRec = True
 
         elif key == arcade.key.UP:
             game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
@@ -1088,6 +1091,7 @@ class CompView(arcade.View):
             self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
+            self.respIsRec = False
 
         @bestAdtnBtn.event("on_click")
         def on_click_flatbutton(event) :
@@ -1095,6 +1099,7 @@ class CompView(arcade.View):
             self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
+            self.respIsRec = True
 
         calcBtnSpace = arcade.gui.UIPadding(
             child=arcade.gui.UIBoxLayout(
@@ -1183,7 +1188,10 @@ class CompView(arcade.View):
         if self.resp == "" :
             msg = ""
         else :
-            msg = f"Where the user party is Team 1 and the adversary party is Team 2 : {self.resp[0][0]}"
+            if self.respIsRec :
+                msg = f"Recommended party addition : {self.resp[0][0]}"
+            else :
+                msg = f"Where the user party is Team 1 and the adversary party is Team 2 : {self.resp[0][0]}"
 
         repsRes = arcade.gui.UITextArea(text=msg, width=300, height=205,
                                         text_color=arcade.color.BLACK_LEATHER_JACKET,
