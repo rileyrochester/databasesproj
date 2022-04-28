@@ -823,14 +823,15 @@ class CompView(arcade.View):
         if key == arcade.key.A :
             print("a clicked")
             self.mySqlConnect()
-            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')})")
+            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
         if key == arcade.key.D :
             print("b clicked")
             self.mySqlConnect()
-            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')})")
+            print(userTeam.get('id'))
+            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
@@ -1063,14 +1064,14 @@ class CompView(arcade.View):
         @typeAdvBtn.event("on_click")
         def on_click_flatbutton(event) :
             self.mySqlConnect()
-            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')})")
+            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
         @bestAdtnBtn.event("on_click")
         def on_click_flatbutton(event) :
             self.mySqlConnect()
-            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')})")
+            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')});")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
@@ -1079,7 +1080,7 @@ class CompView(arcade.View):
                 space_between=20,
                 vertical=False,
                 children=(typeAdvBtn, bestAdtnBtn)),
-            padding=(65, 20, 65, 20))
+            padding=(50, 20, 95, 20))
 
         calcBox.add(calcLabel)
         calcBox.add(calcBtnSpace)
@@ -1158,7 +1159,14 @@ class CompView(arcade.View):
             text_color=arcade.color.BLACK,
             font_name="courier new")
 
-        repsRes = arcade.gui.UITextArea(text=self.resp, height=205)
+        if self.resp == "" :
+            msg = ""
+        else :
+            msg = f"Where the user party is Team 1 and the adversary party is Team 2 : {self.resp[0][0]}"
+
+        repsRes = arcade.gui.UITextArea(text=msg, width=300, height=205,
+                                        text_color=arcade.color.BLACK_LEATHER_JACKET,
+                                        font_name="courier new", multiline=True)
 
         reportsBox.add(reportsLabel)
         reportsBox.add(repsRes)
