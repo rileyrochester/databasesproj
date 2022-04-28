@@ -207,18 +207,20 @@ BEGIN
 DECLARE numTeamMembers INT;
 DECLARE pokemonName VARCHAR(32);
 DECLARE result VARCHAR(32);
+DECLARE maxV INT;
 
 SELECT count(teamId) INTO numTeamMembers FROM teamMember
 WHERE teamId = teamId;
 
+SELECT max(total) INTO maxV FROM powers;
+
 IF (numTeamMembers = 6)
 	THEN SET result = 'Your team is already full';
 ELSE
-    SELECT max(total), pokemon.pName INTO pokemonName FROM powers
-    INNER JOIN teamMember
-    ON powers.pId = teamMember.pId
-    INNER JOIN pokemon
-    ON teamMember.pId = pokemon.pId;
+    SELECT pokemon.pName INTO pokemonName FROM pokemon 
+    INNER JOIN powers
+    ON pokemon.pId = powers.pId
+	WHERE total = maxV LIMIT 1;
     
     SET result = 'Add ' + pokemonName + ' to your team to increase your power';
 END IF;
