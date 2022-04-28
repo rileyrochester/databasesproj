@@ -119,6 +119,12 @@ INSERT INTO team(userId) VALUES (userId);
 select teamId from team where team.userId = userId;
 END//
 
+delimiter ;
+drop procedure addTeamMember;
+select * from user;
+insert into item(name, category) values ("None", "None");
+call addTeamMember(1, 6283, "None", 10);
+
 -- adds a teammember to team
 DELIMITER //
 CREATE procedure addTeamMember(pId INT, teamId INT, item VARCHAR(32), level INT)
@@ -209,10 +215,10 @@ IF (numTeamMembers = 6)
 	THEN SET result = 'Your team is already full';
 ELSE
     SELECT max(total), pokemon.pName INTO pokemonName FROM powers
-	INNER JOIN teamMembers
-    ON powers.pId = teamMembers.pId
+	INNER JOIN teamMember
+    ON powers.pId = teamMember.pId
     INNER JOIN pokemon
-    ON teamMembers.pId = pokemon.pId;
+    ON teamMember.pId = pokemon.pId;
     
     SET result = 'Add ' + pokemonName + ' to your team to increase your power';
 END IF;
