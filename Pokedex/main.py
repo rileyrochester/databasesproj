@@ -93,6 +93,14 @@ class InstructionsView(arcade.View):
         arcade.set_background_color(arcade.color.FLORAL_WHITE)
         self.manager.enable()
 
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.LEFT:
+            game_view = PokedexView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
+        elif key == arcade.key.RIGHT:
+            game_view = GetInfoView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
+
     def on_draw(self):
         arcade.start_render()
 
@@ -321,6 +329,11 @@ class PokedexView(arcade.View):
                 self.pid = 648
             else:
                 self.pid -= 1
+
+        # arrow up
+        elif key == arcade.key.UP:
+            game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
 
         # enter aka search
         elif key == arcade.key.ENTER:
@@ -585,6 +598,10 @@ class GetInfoView(arcade.View):
             game_view = CompView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
             self.window.show_view(game_view)
 
+        elif key == arcade.key.UP:
+            game_view = InstructionsView(self.WIDTH, self.HEIGHT, self.sqlun, self.sqlpw)
+            self.window.show_view(game_view)
+
         elif key == arcade.key.BACKSPACE:
             self.text = self.text[0: len(self.text) - 1]
 
@@ -812,7 +829,7 @@ class CompView(arcade.View):
         self.manager.clear()
         self.drawBackground()
         self.establishWidgetSpace()
-        self.renderMenuButton(320, -250)
+        # self.renderMenuButton(320, -250)
         self.manager.draw()
         arcade.finish_render()
 
