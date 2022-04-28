@@ -15,7 +15,7 @@ CREATE TABLE admin
 userId INT auto_increment NULL,
 name VARCHAR(32) NOT NULL,
 FOREIGN KEY (userId) REFERENCES user(userId)
-	ON UPDATE RESTRICT ON DELETE RESTRICT
+	ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE type
@@ -33,7 +33,7 @@ pName VARCHAR(32) NOT NULL,
 generation INT NOT NULL,
 type VARCHAR(32) NOT NULL,
 FOREIGN KEY (type) REFERENCES type(name)
-	ON UPDATE RESTRICT ON DELETE RESTRICT
+	ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE powers
@@ -61,7 +61,7 @@ CREATE TABLE team
 teamId INT auto_increment PRIMARY KEY,
 userId INT,
 FOREIGN KEY (userId) REFERENCES user(userId)
-	ON UPDATE CASCADE ON DELETE RESTRICT
+	ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE teamMember
@@ -74,7 +74,7 @@ health INT NOT NULL,
 FOREIGN KEY (pId) REFERENCES pokemon(pId)
 	ON UPDATE CASCADE ON DELETE RESTRICT,
 FOREIGN KEY (teamId) REFERENCES team(teamId)
-	ON UPDATE CASCADE ON DELETE RESTRICT,
+	ON UPDATE CASCADE ON DELETE CASCADE,
 FOREIGN KEY (item) REFERENCES item(name)
 	ON UPDATE CASCADE ON DELETE RESTRICT
 );
@@ -85,9 +85,9 @@ playerTeam INT,
 opponentTeam INT,
 location VARCHAR(32),
 FOREIGN KEY (playerTeam) REFERENCES team(teamId)
-	ON UPDATE CASCADE ON DELETE RESTRICT,
+	ON UPDATE CASCADE ON DELETE CASCADE,
 FOREIGN KEY (opponentTeam) REFERENCES team(teamId)
-	ON UPDATE CASCADE ON DELETE RESTRICT
+	ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- gets items
@@ -178,14 +178,14 @@ DECLARE result VARCHAR(32);
 
 SELECT avg(advantageScore) INTO avgScore1 FROM type
 INNER JOIN pokemon
-ON type.type = pokemon.type
+ON type.name = pokemon.type
 INNER JOIN teamMember
 ON pokemon.pId = teamMember.pId
 WHERE teamMember.teamId = teamId1;
 
 SELECT avg(advantageScore) INTO avgScore2 FROM type
 INNER JOIN pokemon
-ON type.type = pokemon.type
+ON type.name = pokemon.type
 INNER JOIN teamMember
 ON pokemon.pId = teamMember.pId
 WHERE teamMember.teamId = teamId2;
