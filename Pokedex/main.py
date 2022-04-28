@@ -477,7 +477,7 @@ class GetInfoView(arcade.View):
 
         x = 0
         arcade.draw_text(f"team id : {userTeam.get('id')}", 100, 340, arcade.color.GENERIC_VIRIDIAN, 12)
-        print(f"user team {userTeam}")
+        # print(f"user team {userTeam}")
         # print(f"user team items {userTeam.items()}")
 
         for pokemon in userTeam.items():
@@ -733,8 +733,10 @@ class GetInfoView(arcade.View):
             userTeam["id"] = self.cur.fetchall()[0][0]
             # print(f"user team id : {userTeam.get('id')}")
             self.conn.commit()
+            print("created usr team")
         except :
             self.conn.rollback()
+            print("failed to create usr team")
 
         try :
             self.cur.callproc("createTeam", [advId])
@@ -742,14 +744,18 @@ class GetInfoView(arcade.View):
             advTeam["id"] = temp[len(temp) - 1][0]
             # print(f"adv team id : {advTeam.get('id')}")
             self.conn.commit()
+            print("created adv team")
         except :
             self.conn.rollback()
+            print("failed to create adv team")
 
         try :
             self.cur.callproc("createBattle", [userTeam.get('id'), advTeam.get('id'), "Sinnoh"])
             self.conn.commit()
+            print("created battle")
         except :
             self.conn.rollback()
+            print("failed to create battle")
 
         self.closeSqlConnection()
 
@@ -758,6 +764,7 @@ class GetInfoView(arcade.View):
         try :
             self.cur.callproc("addTeamMember", [pokemon[0][0], teamId, item, level])
             self.conn.commit()
+            print(f"added {pokemon[0][0]} to team {teamId}")
         except :
             self.conn.rollback()
             print(f"failed to add {pokemon[0][0]} to team {teamId}")
@@ -812,6 +819,21 @@ class CompView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.A :
+            print("a clicked")
+            self.mySqlConnect()
+            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')})")
+            self.resp = self.cur.fetchall()
+            self.closeSqlConnection()
+
+        if key == arcade.key.D :
+            print("b clicked")
+            self.mySqlConnect()
+            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')})")
+            self.resp = self.cur.fetchall()
+            self.closeSqlConnection()
+
     def renderMenuButton(self, x, y):
         style = {
             "font_name": ("courier new"),
@@ -840,49 +862,49 @@ class CompView(arcade.View):
             self.window.show_view(game_view)
 
     def drawBackground(self):
-        arcade.create_rectangle_filled(200, 450, 400, 300, arcade.color.LIGHT_CRIMSON, 0).draw()
-        arcade.create_rectangle_filled(600, 450, 400, 300, arcade.color.LIGHT_MOSS_GREEN, 0).draw()
+        arcade.create_rectangle_filled(200, 415, 400, 370, arcade.color.LIGHT_CRIMSON, 0).draw()
+        arcade.create_rectangle_filled(600, 415, 400, 370, arcade.color.LIGHT_MOSS_GREEN, 0).draw()
         # advs
         advs = list(advTeam.items())
         # print(advs)
-        if len(advs) > 0 : arcade.draw_text(
-            f"lvl {advs[0][1][2]} {advs[0][1][0][0][1]}, {advs[0][1][1]}",
-            70, 490,
-            arcade.color.BLACK_LEATHER_JACKET,
-            10, 100,
-            "center",
-            "courier new")
         if len(advs) > 1 : arcade.draw_text(
             f"lvl {advs[1][1][2]} {advs[1][1][0][0][1]}, {advs[1][1][1]}",
-            190, 490,
+            30, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(advs) > 2 : arcade.draw_text(
             f"lvl {advs[2][1][2]} {advs[2][1][0][0][1]}, {advs[2][1][1]}",
-            310, 490,
+            150, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(advs) > 3 : arcade.draw_text(
             f"lvl {advs[3][1][2]} {advs[3][1][0][0][1]}, {advs[3][1][1]}",
-            70, 365,
+            270, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(advs) > 4 : arcade.draw_text(
             f"lvl {advs[4][1][2]} {advs[4][1][0][0][1]}, {advs[4][1][1]}",
-            190, 365,
+            30, 270,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(advs) > 5 : arcade.draw_text(
             f"lvl {advs[5][1][2]} {advs[5][1][0][0][1]}, {advs[5][1][1]}",
-            310, 365,
+            150, 270,
+            arcade.color.BLACK_LEATHER_JACKET,
+            10, 100,
+            "center",
+            "courier new")
+        if len(advs) > 6 : arcade.draw_text(
+            f"lvl {advs[6][1][2]} {advs[6][1][0][0][1]}, {advs[6][1][1]}",
+            270, 270,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
@@ -892,42 +914,42 @@ class CompView(arcade.View):
         # print(usrs)
         if len(usrs) > 1 : arcade.draw_text(
             f"lvl {usrs[1][1][2]} {usrs[1][1][0][0][1]}, {usrs[1][1][1]}",
-            480, 65,
+            430, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(usrs) > 2 : arcade.draw_text(
             f"lvl {usrs[2][1][2]} {usrs[2][1][0][0][1]}, {usrs[2][1][1]}",
-            600, 65,
+            550, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(usrs) > 3 : arcade.draw_text(
             f"lvl {usrs[3][1][2]} {usrs[3][1][0][0][1]}, {usrs[3][1][1]}",
-            720, 65,
+            670, 428,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(usrs) > 4 : arcade.draw_text(
             f"lvl {usrs[4][1][2]} {usrs[4][1][0][0][1]}, {usrs[4][1][1]}",
-            480, 185,
+            430, 270,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(usrs) > 5 : arcade.draw_text(
             f"lvl {usrs[5][1][2]} {usrs[5][1][0][0][1]}, {usrs[5][1][1]}",
-            600, 185,
+            550, 270,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
             "courier new")
         if len(usrs) > 6 : arcade.draw_text(
             f"lvl {usrs[6][1][2]} {usrs[6][1][0][0][1]}, {usrs[6][1][1]}",
-            720, 185,
+            670, 270,
             arcade.color.BLACK_LEATHER_JACKET,
             10, 100,
             "center",
@@ -964,7 +986,8 @@ class CompView(arcade.View):
             text_color=arcade.color.BLACK_LEATHER_JACKET,
             font_name="courier new")
 
-        adversaryParty = arcade.gui.UIBoxLayout(x=0, y=300, space_between=20)
+        adversaryParty = arcade.gui.UIBoxLayout(x=0, y=230, space_between=25)
+        rows = arcade.gui.UIBoxLayout(space_between=50)
         advTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
         advBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
 
@@ -1007,9 +1030,10 @@ class CompView(arcade.View):
         advBottomRow.add(adv5)
         advBottomRow.add(adv6)
 
+        rows.add(advTopRow)
+        rows.add(arcade.gui.UIPadding(child=advBottomRow, padding=(0, 0, 50, 0)))
         adversaryParty.add(advPartyLabel)
-        adversaryParty.add(advTopRow)
-        adversaryParty.add(arcade.gui.UIPadding(child=advBottomRow, padding=(0, 0, 20, 0)))
+        adversaryParty.add(rows)
 
         return adversaryParty
 
@@ -1033,20 +1057,20 @@ class CompView(arcade.View):
             "bg_color": arcade.color.PERSIAN_PINK
         }
 
-        typeAdvBtn = arcade.gui.UIFlatButton(text="Type Advantage", style=style)
-        bestAdtnBtn = arcade.gui.UIFlatButton(text="Best Type Addition", style=style)
+        typeAdvBtn = arcade.gui.UIFlatButton(text="Compare Teams (click A)", width=170, height=60, style=style)
+        bestAdtnBtn = arcade.gui.UIFlatButton(text="Recommend Addition (click D)", width=170, height=60, style=style)
 
         @typeAdvBtn.event("on_click")
         def on_click_flatbutton(event) :
             self.mySqlConnect()
-            self.cur.callproc("compareTeams", [1, 2])
+            self.cur.execute(f"select compareTeams({userTeam.get('id')}, {advTeam.get('id')})")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
         @bestAdtnBtn.event("on_click")
         def on_click_flatbutton(event) :
             self.mySqlConnect()
-            self.cur.callproc("reccomendTeamMember", [1])
+            self.cur.execute(f"select reccomendTeamMember({userTeam.get('id')})")
             self.resp = self.cur.fetchall()
             self.closeSqlConnection()
 
@@ -1055,7 +1079,7 @@ class CompView(arcade.View):
                 space_between=20,
                 vertical=False,
                 children=(typeAdvBtn, bestAdtnBtn)),
-            padding=(105, 40, 105, 40))
+            padding=(65, 20, 65, 20))
 
         calcBox.add(calcLabel)
         calcBox.add(calcBtnSpace)
@@ -1072,7 +1096,8 @@ class CompView(arcade.View):
             font_name="courier new",
             text_color=arcade.color.BLACK_LEATHER_JACKET)
 
-        userParty = arcade.gui.UIBoxLayout(x=400, y=300, space_between=20)
+        userParty = arcade.gui.UIBoxLayout(x=400, y=230, space_between=25)
+        rows = arcade.gui.UIBoxLayout(space_between=50)
         userTopRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
         userBottomRow = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
 
@@ -1115,9 +1140,10 @@ class CompView(arcade.View):
         userBottomRow.add(user5)
         userBottomRow.add(user6)
 
+        rows.add(userTopRow)
+        rows.add(arcade.gui.UIPadding(child=userBottomRow, padding=(0, 0, 50, 0)))
         userParty.add(myTeamLabel)
-        userParty.add(userTopRow)
-        userParty.add(arcade.gui.UIPadding(child=userBottomRow, padding=(0, 0, 20, 0)))
+        userParty.add(rows)
 
         return userParty
 
@@ -1132,7 +1158,7 @@ class CompView(arcade.View):
             text_color=arcade.color.BLACK,
             font_name="courier new")
 
-        repsRes = arcade.gui.UITextArea(text=self.resp, height=260)
+        repsRes = arcade.gui.UITextArea(text=self.resp, height=205)
 
         reportsBox.add(reportsLabel)
         reportsBox.add(repsRes)
