@@ -222,7 +222,7 @@ ELSE
     ON pokemon.pId = powers.pId
 	WHERE total = maxV LIMIT 1;
     
-    SET result = 'Add ' + pokemonName + ' to your team to increase your power';
+    SET result = pokemonName;
 END IF;
 
 RETURN result;
